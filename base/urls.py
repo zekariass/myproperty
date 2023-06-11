@@ -34,6 +34,13 @@ urlpatterns = [
     # User module
     path("users/", include("apps.users.urls")),
 
-    # User module
-    path("system/", include("apps.system.urls"))
+    # System module
+    path("system/", include("apps.system.urls")),
+
+    # Commons module
+    path("commons/", include("apps.commons.urls")),
+
+
+    # Agents module
+    path("agents/", include("apps.agents.urls")),
 ]

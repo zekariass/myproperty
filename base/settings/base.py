@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'rest_framework',
     "apps.users",
     "apps.system",
+    "apps.commons",
+    "apps.agents",
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -194,3 +196,12 @@ STORAGES = {
     "staticfiles": {
                 "BACKEND": "base.custom_storage.StaticFileStorage"},
             }
+
+#EMAIL SETTING
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'grinmove@gmail.com'
+EMAIL_HOST_PASSWORD = 'gpwnkivstpjtfmfu'
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = 'grinmove@gmail.com'

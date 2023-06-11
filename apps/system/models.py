@@ -14,7 +14,10 @@ from apps.mixins.common_fields import (DescriptionAndAddedOnFieldMixin,
 from apps.mixins import constants
 
 class System(DescriptionAndAddedOnFieldMixin):
-    name = models.CharField("system module name", max_length=100, unique=True)
+    name = models.CharField("system module name", 
+                            max_length=100, 
+                            unique=True, 
+                            choices=constants.SYSTEM_MODULE_NAMES)
 
 
     def __str__(self):
@@ -32,11 +35,12 @@ class ListingParameter(DescriptionAndAddedOnFieldMixin):
                                help_text="The system module that this parameter apply to",
                                related_name="listing_parameters",
                                related_query_name="listing_parameter")
-    name = models.CharField("parameter name", max_length=200)
+    name = models.CharField("parameter name", max_length=200, unique=True, choices=constants.LISTING_PARAMETER_NAMES)
     value = models.CharField("parameter value", max_length=100, blank=True, default="", 
                              help_text="It is any value associated with the listing parameter. \
                                         The value could be integer, string or boolean. \
                                         Value type cast will be done when actually using the value")
+    will_expire_after_days = models.PositiveIntegerField("How many days will conf stay valid", default=1)
     is_active = models.BooleanField(default=True)
     
     class Meta:
@@ -152,14 +156,6 @@ class Discount(AddedOnFieldMixin,
     discount_type = models.CharField(choices=constants.DISCOUNT_TYPES, max_length=50)
     is_active = models.BooleanField(default=True)
     is_trackable = models.BooleanField(default=False)
-
-    # class Meta:
-    #     constraints = [
-    #         models.CheckConstraint(check=Q(action__exact="COUNT") & 
-    #                                Q(unit__exact="SUBSCRIPTION"),
-    #                                 name="discount_constraint",
-    #                                 violation_error_message="Incompatible action unit for this discount!")
-    #     ]
 
     def __str__(self):
         return f"{self.name}"
@@ -417,16 +413,42 @@ class SystemAsset(DescriptionAndAddedOnFieldMixin):
 
 
 class ReferralRewardPlan(DescriptionAndAddedOnFieldMixin,
-                         ExpireOnFieldMixin):
+                         StartAndExpireOnFieldMixin):
     system = models.ForeignKey(System, verbose_name="System Module", on_delete=models.CASCADE, 
                                help_text="The system module that this referral reward plan applies to",
                                related_name="referral_reward_plans",
                                related_query_name="referral_reward_plan")
-    name = models.CharField("system asset name", max_length=200, unique=True)
-    reward_percentage_value = models.DecimalField(decimal_places=2,  max_digits=10, default=0.00)
-    reward_fixed_value = models.DecimalField(decimal_places=2,  max_digits=10, default=0.00)
-    number_of_referrals_needed = models.PositiveIntegerField(default=1, blank=True)
-    reward_active_time_in_days = models.PositiveIntegerField(help_text="is the number of days that the reward stays active once awarded")
+    name = models.CharField("reward plan name", max_length=200, unique=True)
+    referrer_reward_percentage_value = models.DecimalField(decimal_places=2,  max_digits=10, default=0.00)
+    referrer_reward_fixed_value = models.DecimalField(decimal_places=2,  max_digits=10, default=0.00)
+    referee_reward_percentage_value = models.DecimalField(decimal_places=2,  max_digits=10, default=0.00)
+    referee_reward_fixed_value = models.DecimalField(decimal_places=2,  max_digits=10, default=0.00)
+    number_of_referrals_needed = models.PositiveIntegerField(default=1, 
+                                                             blank=True,
+                                                             help_text="Number of referral actions needed to get the reward.")
+    # reward_active_time_in_days = models.PositiveIntegerField(help_text="is the number of days that the reward stays active once awarded")
+
+    def save(self, *args, **kwargs):
+        # Check if there is already an unexpired reward plan for the system module
+        existing_unexpired_reward_plan = ReferralRewardPlan.objects.filter(
+            system=self.system,
+            expire_on__gt = timezone.now()
+        ).exclude(id=self.id).first()
+
+        if (existing_unexpired_reward_plan and not self.id) or \
+            (existing_unexpired_reward_plan and self.id and self.expire_on > timezone.now()):
+            raise ValueError("A system module can only have one unexpired reward plan!")
+        
+        if self.start_on > self.expire_on:
+            raise ValueError("Start date cannot be later than expire date!")
+        
+        
+        super(ReferralRewardPlan, self).save(*args, **kwargs)
+
+
+    @property
+    def is_plan_active(self):
+        return self.expire_on > timezone.now()
 
     def __str__(self):
         return f"{self.name}"

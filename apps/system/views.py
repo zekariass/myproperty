@@ -6,6 +6,9 @@ from rest_framework.permissions import (IsAdminUser)
 from . import models as sys_models
 from . import serializers as sys_serializers
 
+from rest_framework.response import Response
+from rest_framework import status
+
 #================= SYSTEM ===================================
 class SystemListCreateView(ListCreateAPIView):
     queryset = sys_models.System.objects.all()
@@ -215,11 +218,42 @@ class ReferralRewardPlanListCreateView(ListCreateAPIView):
     serializer_class = sys_serializers.ReferralRewardPlanSerializer
     permission_classes = [IsAdminUser,]
 
+    def post(self, request):
 
+        reward_plan_serializer = self.serializer_class(data=request.data)
+
+        if reward_plan_serializer.is_valid():
+            try:
+                reward_plan_serializer.save()
+            except ValueError:
+                #CAPTURE IF UNEXPIRED PLAN IS ALREADY EXIST FOR A SYSTEM MODULE
+                return Response({"detail": "A system module can only have one unexpired reward plan."}, status=status.HTTP_409_CONFLICT)
+            return Response(data= reward_plan_serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response({"detail": "Data is invalid!"}, status=status.HTTP_400_BAD_REQUEST)
+        
+    
 class ReferralRewardPlanRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = sys_models.ReferralRewardPlan.objects.all()
     serializer_class = sys_serializers.ReferralRewardPlanSerializer
     permission_classes = [IsAdminUser,]
+
+    def update(self, request, *args, **kwargs):
+
+        instance = self.get_object()
+
+        reward_plan_serializer = self.get_serializer(instance, data=request.data, partial=True)
+
+        if reward_plan_serializer.is_valid():
+            try:
+                reward_plan_serializer.save()
+            except Exception as e:
+                #CAPTURE IF UNEXPIRED PLAN IS ALREADY EXIST FOR A SYSTEM MODULE
+                return Response({"detail": str(e)}, status=status.HTTP_409_CONFLICT)
+            return Response(data= reward_plan_serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response({"detail": "Data is not valid!"}, status=status.HTTP_400_BAD_REQUEST)
+
     
     
 #============== FEATURING PRICE ========================================

@@ -184,9 +184,31 @@ class SystemAssetSerializer(ModelSerializer):
 
 #=============== REFERAL REWARD PLAN =========================
 class ReferralRewardPlanSerializer(ModelSerializer):
+    is_plan_active = serializers.SerializerMethodField()
     class Meta:
         model = sys_models.ReferralRewardPlan
-        fields = "__all__"
+        fields = ["id", 
+                  "system", 
+                  "name", 
+                  "referrer_reward_percentage_value",
+                  "referrer_reward_fixed_value",
+                  "referee_reward_percentage_value",
+                  "referee_reward_fixed_value",
+                  "number_of_referrals_needed",
+                  "start_on",
+                  "expire_on",
+                  "is_plan_active",
+                  "added_on"]
+        read_only_fields = ["id", "is_plan_active", "added_on"]
+        # extra_kwargs = {
+        #     "is_active": {
+        #         "read_only": True
+        #     }
+        # }
+
+    def get_is_plan_active(self, obj):
+        return obj.is_plan_active
+
 
 #=============== FEATURING PRICE =============================
 class FeaturingPriceSerializer(ModelSerializer):
