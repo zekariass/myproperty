@@ -1,7 +1,10 @@
+import os
 import random
 import string
 import uuid
+
 from django.core.mail import send_mail
+from django.utils import timezone
 
 from . import constants
 
@@ -32,6 +35,11 @@ def generate_coupon_code():
         characters = string.ascii_letters + string.digits
         code = "".join(random.choice(characters) for _ in range(12))
         return code
+
+def generate_custom_property_id():
+        characters = string.ascii_letters + string.digits
+        code = "".join(random.choice(characters) for _ in range(11))
+        return constants.PROPERTY_CUSTOM_ID_INITIAL + code
 
 
 def create_coupon(coupon, **coupon_data):
@@ -125,3 +133,24 @@ def send_referee_coupon_email(referee_coupon, percentage_value, fixed_value, rec
                            recipient_list, 
                            html_message=message,
                            fail_silently=True)
+        
+
+def property_plan_upload_path(instance, filename):
+        now = timezone.now()
+        _, extension = os.path.splitext(filename.lower())
+        milliseconds = now.microsecond//1000
+        return f"properties/plan/{instance.pk}_{now:%Y:%m:%d:%H:%M:%S}_{milliseconds}{extension}"
+
+
+def property_image_path(instance, filename):
+    now = timezone.now()
+    basename, extension = os.path.splitext(filename)
+    milliseconds = now.microsecond//1000
+    return f"properties/images/{instance.property.pk}_{now:%Y%m%d%H%M%S}_{milliseconds}{extension}"
+
+
+def property_video_path(instance, filename):
+    now = timezone.now()
+    basename, extension = os.path.splitext(filename)
+    milliseconds = now.microsecond//1000
+    return f"properties/videos/{instance.property.pk}_{now:%Y%m%d%H%M%S}_{milliseconds}{extension}"

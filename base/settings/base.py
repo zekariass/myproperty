@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "apps.system",
     "apps.commons",
     "apps.agents",
+    "apps.properties",
 ]
 
 AUTHENTICATION_BACKENDS = [
