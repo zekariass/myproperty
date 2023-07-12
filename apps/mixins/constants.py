@@ -11,22 +11,22 @@ PERIODS = [
 
 
 DISCOUNT_ACTIONS = [
-        ("COUNT", "Count"),
-        ("SINGLE", "Single"),
-        ("DEADLINE", "Deadline")
-    ]
+    ("COUNT", "Count"),
+    ("SINGLE", "Single"),
+    ("DEADLINE", "Deadline")
+]
 
 
 DISCOUNT_UNITS = [
-        ("DAYS", "Days"),
-        ("LISTINGS", "Listings"),
-        ("SUBSCRIPTION", "Subscription")
-    ]
+    ("DAYS", "Days"),
+    ("LISTINGS", "Listings"),
+    ("SUBSCRIPTION", "Subscription")
+]
 
 DISCOUNT_TYPES = [
-        ("PAY_PER_LISTING", "Pay-per-listing"),
-        ("SUBSCRIPTION", "Subscription")
-    ]
+    ("PAY_PER_LISTING", "Pay-per-listing"),
+    ("SUBSCRIPTION", "Subscription")
+]
 
 AGENT_REQUEST_TYPES = [
     ("VIEW_PROPERTY", "View the property"),
@@ -60,16 +60,28 @@ SYSTEM_MODULE_NAMES = [
 ]
 
 
+APARTMENT_KEY = "PROPCAT001"
+CONDOMINIUM_KEY = "PROPCAT002"
+TOWNHOUSE_KEY = "PROPCAT003"
+VILLA_KEY = "PROPCAT004"
+SHAREHOUSE_KEY = "PROPCAT005"
+COMMERCIAL_PROPERTY_KEY = "PROPCAT006"
+VENUE_KEY = "PROPCAT007"
+LAND_KEY = "PROPCAT008"
+
 PROPERTY_CATEGORY_KEY = [
-        ('PROPCAT001', 'Apartment'),
-        ('PROPCAT002', 'Condominium'),
-        ('PROPCAT003', 'Townhouse'),
-        ('PROPCAT004', 'Villa'),
-        ('PROPCAT005', 'Sharehouse'),
-        ('PROPCAT006', 'Commercial Property'),
-        ('PROPCAT007', 'Venue'),
-        ('PROPCAT008', 'Land'),
-    ]
+    (APARTMENT_KEY, 'Apartment'),
+    (CONDOMINIUM_KEY, 'Condominium'),
+    (TOWNHOUSE_KEY, 'Townhouse'),
+    (VILLA_KEY, 'Villa'),
+    (SHAREHOUSE_KEY, 'Sharehouse'),
+    (COMMERCIAL_PROPERTY_KEY, 'Commercial Property'),
+    (VENUE_KEY, 'Venue'),
+    (LAND_KEY, 'Land'),
+]
+
+OTHER_COMMERCIAL_PROPERTY_UNIT = "OTHER_UNIT"
+OFFICE_COMMERCIAL_PROPERTY_UNIT = "OFFICE_UNIT"
 
 PROPERTY_TENURE_TYPES = [
     ("FREEHOLD", "Freehold"),
@@ -93,7 +105,7 @@ PROPERTY_STATUS = [
 ]
 
 
-PROPERTY_STRUCTURE =[
+PROPERTY_STRUCTURE = [
     ("DETACHED", "Detached"),
     ("SEMI_DETACHED", "Semi Detached"),
     ("TERRACED", "Terraced"),
@@ -101,7 +113,7 @@ PROPERTY_STRUCTURE =[
 ]
 
 
-BUILDING_TYPES =[
+BUILDING_TYPES = [
     ("APARTMENT", "Apartment"),
     ("CONDOMINIUM", "Condominium"),
     ("TOWNHOUSE", "Townhouse"),
@@ -110,7 +122,7 @@ BUILDING_TYPES =[
 ]
 
 
-GENDER =[
+GENDER = [
     ("MALE", "Male"),
     ("Female", "Female"),
     ("ANY", "Any")
@@ -122,4 +134,3 @@ USER_GROUP_ANY = "ANY"
 AGENT_REFERRAL_CODE_INITIAL = "ARC_"
 AGENT_BRANCH_CODE_INITIAL = "AB_"
 PROPERTY_CUSTOM_ID_INITIAL = "PRO_"
-

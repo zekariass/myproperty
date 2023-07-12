@@ -9,11 +9,12 @@ from . import serializers as cmns_serializers
 from apps.mixins.permissions import IsAdminUserOrReadOnly
 
 
-#================= COUNTRY ===================================
+# ================= COUNTRY ===================================
 class CountryListCreateView(ListCreateAPIView):
     queryset = cmns_models.Country.objects.all()
     serializer_class = cmns_serializers.CountrySerializer
     permission_classes = [IsAdminUserOrReadOnly,]
+
 
 class CountryRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = cmns_models.Country.objects.all()
@@ -21,13 +22,14 @@ class CountryRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAdminUserOrReadOnly,]
 
 
-#================= ADDRESS ===================================
+# ================= ADDRESS ===================================
 class AddressListCreateView(ListCreateAPIView):
     queryset = cmns_models.Address.objects.all()
-    serializer_class = cmns_serializers.AddessSerializer
+    serializer_class = cmns_serializers.AddressSerializer
     permission_classes = [IsAdminUserOrReadOnly,]
+
 
 class AddressRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = cmns_models.Address.objects.all()
-    serializer_class = cmns_serializers.AddessSerializer
+    serializer_class = cmns_serializers.AddressSerializer
     permission_classes = [IsAdminUserOrReadOnly,]

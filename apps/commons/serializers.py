@@ -2,14 +2,18 @@ from rest_framework.serializers import ModelSerializer
 
 from . import models as cmns_models
 
-#================= COUNTRY ===================================
+# ================= COUNTRY ===================================
+
+
 class CountrySerializer(ModelSerializer):
     class Meta:
         model = cmns_models.Country
         fields = "__all__"
 
-#================= ADDRESS ===================================
-class AddessSerializer(ModelSerializer):
+# ================= ADDRESS ===================================
+
+
+class AddressSerializer(ModelSerializer):
     class Meta:
         model = cmns_models.Address
         fields = "__all__"

@@ -19,9 +19,7 @@ from . import serializers as agent_serializers
 from apps.mixins.functions import generate_agent_branch_code
 
 
-
-
-#====================== AGENT ====================================
+# ====================== AGENT ====================================
 # class AgentCreateView(CreateAPIView):
 #     queryset = agent_models.Agent.objects.all()
 #     serializer_class = agent_serializers.AgentCreateSerializer
@@ -48,8 +46,7 @@ class AgentRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticatedOrReadOnly,]
 
 
-
-#====================== AGENT BRANCH====================================
+# ====================== AGENT BRANCH====================================
 class AgentBranchListCreateView(ListCreateAPIView):
     queryset = agent_models.AgentBranch.objects.all()
     serializer_class = agent_serializers.AgentBranchSerializer
@@ -58,28 +55,29 @@ class AgentBranchListCreateView(ListCreateAPIView):
         try:
             agent = agent_models.Agent.objects.get(pk=pk)
         except agent_models.Agent.DoesNotExist:
-            return Response({"detail": f"No Agent found with id {pk}!"}, status=status.HTTP_404_NOT_FOUND )
+            return Response({"detail": f"No Agent found with id {pk}!"}, status=status.HTTP_404_NOT_FOUND)
 
         agent_branches = agent.branches.all()
-        return Response({"detail": self.serializer_class(agent_branches, many=True).data}, 
+        return Response({"detail": self.serializer_class(agent_branches, many=True).data},
                         status=status.HTTP_200_OK)
-   
+
+
 class AgentBranchRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = agent_models.AgentBranch.objects.all()
     serializer_class = agent_serializers.AgentBranchSerializer
     permission_classes = [IsAuthenticatedOrReadOnly,]
 
 
-#====================== AGENT ADMIN ====================================
+# ====================== AGENT ADMIN ====================================
 class AgentAdminListCreateView(ListCreateAPIView):
     # queryset = agent_models.AgentAdmin.objects.all()
     serializer_class = agent_serializers.AgentAdminSerializer
     permission_classes = [IsAuthenticatedOrReadOnly,]
 
-
     def get_queryset(self):
         branch_id = self.kwargs["pk"]
-        agent_admins = agent_models.AgentAdmin.objects.filter(agent_branch=branch_id)
+        agent_admins = agent_models.AgentAdmin.objects.filter(
+            agent_branch=branch_id)
         return agent_admins
 
 
@@ -96,10 +94,7 @@ class AgentAdminRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
         elif not admins.get(pk=pk).is_superadmin and admins.count() == 1:
             return Response({"detail": "Operation cannot be completed. At least one admin is required!"},
                             status=status.HTTP_403_FORBIDDEN)
-        
+
         agent_models.AgentAdmin.objects.get(pk=pk).delete()
         return Response({"detail": "Admin deleted!"},
-                            status=status.HTTP_200_OK)
-    
-    
-    
+                        status=status.HTTP_200_OK)
