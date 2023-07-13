@@ -5,13 +5,10 @@ from pathlib import Path
 
 from datetime import timedelta
 
+from base.settings.production import ALLOWED_HOSTS
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
-env = environ.Env(
-    # set casting, default value
-    IS_DEVELOPMENT=(bool, True)
-)
 
 # Take environment variables from .env file
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
@@ -23,13 +20,9 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 # SECRET_KEY = 'django-insecure-p^*p!+dt8ccl@aac(mh%wy&wy=+bapiw4r+psw&0r&2=*cegiw'
 SECRET_KEY = getenv("SECRET_KEY")
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = getenv("IS_DEVELOPMENT")
-
 # Application definition
-
 INSTALLED_APPS = [
-    "daphne",
+    # "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",

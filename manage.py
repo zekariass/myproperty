@@ -2,17 +2,19 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
-from base.settings.base import DEBUG
+
+# from base.settings.base import DEBUG
 
 
 def main():
     """Run administrative tasks."""
-    if DEBUG:
-        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'base.settings.development')
-        print("Running in development mode!")
-    else:
-        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'base.settings.production')
-        print("Running in production mode!")
+    # print("=============>: ", bool(DEBUG))
+    # if DEBUG:
+    #     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "base.settings.development")
+    #     print("Running in development mode!")
+    # else:
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "base.settings")
+    # print("Running in production mode!")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
@@ -24,5 +26,5 @@ def main():
     execute_from_command_line(sys.argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
