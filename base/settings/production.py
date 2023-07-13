@@ -24,7 +24,7 @@ DATABASES = {
     # },
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "grinmove$myproperty",
+        "NAME": "grinmove$myproperty2",
         "USER": "grinmove",
         "PASSWORD": "Myproperty@23",
         "HOST": "grinmove.mysql.pythonanywhere-services.com"
