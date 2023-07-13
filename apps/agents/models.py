@@ -510,7 +510,9 @@ class Request(AddedOnFieldMixin):
         related_query_name="user_request",
         help_text="The user that the request is sent by",
     )
-    request_type = models.CharField("type of request", choices=AGENT_REQUEST_TYPES)
+    request_type = models.CharField(
+        "type of request", max_length=100, choices=AGENT_REQUEST_TYPES
+    )
 
     def __str__(self):
         return f"{self.request_type}"
@@ -523,7 +525,9 @@ class RequestMessage(AddedOnFieldMixin):
 
     request = models.ForeignKey(Request, on_delete=models.CASCADE)
     message = models.TextField()
-    sender = models.CharField("message sender", choices=AGENT_REQUEST_SENDER)
+    sender = models.CharField(
+        "message sender", max_length=100, choices=AGENT_REQUEST_SENDER
+    )
 
     def __str__(self):
         return f"{self.sender}"
