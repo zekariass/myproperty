@@ -3,6 +3,9 @@ from django.contrib.auth import get_user_model
 
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
+
+from apps.mixins import constants
+
 from . import models
 
 
@@ -53,22 +56,6 @@ class MypropertyUserSerializer(ModelSerializer):
     roles = RoleSerializer(read_only=True, many=True)
     password = serializers.CharField(write_only=True)
 
-    def create(self, validated_data):
-        password = validated_data.pop("password")
-        groups = Group.objects.all()
-        is_staff = validated_data.get("is_staff")
-        if is_staff is None or is_staff is False:
-            user_group = groups.get(name="ANY")
-        else:
-            user_group = groups.get(name="SYSTEM_ADMIN")
-
-        user = get_user_model().objects.create(**validated_data)
-        user.groups.add(user_group)
-
-        user.set_password(password)
-        user.save()
-        return user
-
     class Meta:
         model = get_user_model()
         fields = [
@@ -87,6 +74,22 @@ class MypropertyUserSerializer(ModelSerializer):
             "roles",
         ]
         read_only_fields = ["id"]
+
+    def create(self, validated_data):
+        password = validated_data.pop("password")
+        groups = Group.objects.all()
+        is_staff = validated_data.get("is_staff")
+        if is_staff is None or is_staff is False:
+            user_group = groups.get(name=constants.USER_GROUP_ANY)
+        else:
+            user_group = groups.get(name=constants.USER_GROUP_ADMIN)
+
+        user = get_user_model().objects.create(**validated_data)
+        user.groups.add(user_group)
+
+        user.set_password(password)
+        user.save()
+        return user
 
 
 class MypropertyUserNoPasswordSerializer(ModelSerializer):
@@ -137,4 +140,4 @@ class ChangeUserPasswordSerializer(serializers.Serializer):
 
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
-    confirm_password = serializers.CharField(required=True)
+    # confirm_password = serializers.CharField(required=True)
