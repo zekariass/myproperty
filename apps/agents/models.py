@@ -80,6 +80,10 @@ class Agent(DescriptionAndAddedOnFieldMixin):
     def __str__(self):
         return f"{self.id} {self.name}"
 
+    @property
+    def has_active_subscription(self):
+        return len(self.service_subscriptions.filter(expire_on__lt=timezone.now())) >= 1
+
 
 @receiver(post_save, sender=Agent)
 def agent_post_save(sender, instance, created, **kwargs):

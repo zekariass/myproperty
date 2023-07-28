@@ -1,31 +1,21 @@
-
 COUPON_CODE_LENGTH = 15
 VOUCHER_CODE_LENGTH = 15
 
-PERIODS = [
-    ("DAY", "Day"),
-    ("WEEK", "Week"),
-    ("MONTH", "Month"),
-    ("YEAR", "Year")
-]
+PERIODS = [("DAY", "Day"), ("WEEK", "Week"), ("MONTH", "Month"), ("YEAR", "Year")]
 
 
-DISCOUNT_ACTIONS = [
-    ("COUNT", "Count"),
-    ("SINGLE", "Single"),
-    ("DEADLINE", "Deadline")
-]
+DISCOUNT_ACTIONS = [("COUNT", "Count"), ("SINGLE", "Single"), ("DEADLINE", "Deadline")]
 
 
 DISCOUNT_UNITS = [
     ("DAYS", "Days"),
     ("LISTINGS", "Listings"),
-    ("SUBSCRIPTION", "Subscription")
+    ("SUBSCRIPTION", "Subscription"),
 ]
 
 DISCOUNT_TYPES = [
     ("PAY_PER_LISTING", "Pay-per-listing"),
-    ("SUBSCRIPTION", "Subscription")
+    ("SUBSCRIPTION", "Subscription"),
 ]
 
 AGENT_REQUEST_TYPES = [
@@ -39,17 +29,39 @@ AGENT_REQUEST_SENDER = [
     ("CLIENT", "Client"),
 ]
 
+
+LISTING_TYPE_RENT = "RENT"
+LISTING_TYPE_SALE = "SALE"
+
 LISTING_TYPE = [
-    ("RENT", "Rent"),
-    ("SALE", "Sale"),
+    (LISTING_TYPE_RENT, "Rent"),
+    (LISTING_TYPE_SALE, "Sale"),
 ]
 
 
+LISTING_PAYMENT_TYPES = [
+    ("SUBSCRIPTION", "Subscription"),
+    ("PAY_PER_LISTING", "Pay per listing"),
+]
+
+PAYMENT_APPRIVAL_MODE_AUTO = "AUTO"
+PAYMENT_APPRIVAL_MODE_MANUAL = "MANUAL"
+
+PAYMENT_APPRIVAL_MODES = [
+    (PAYMENT_APPRIVAL_MODE_AUTO, "Automatic"),
+    (PAYMENT_APPRIVAL_MODE_MANUAL, "Manual"),
+]
+
+RENT_TERM = [("LONG_TERM", "Long term"), ("SHORT_TERM", "Short term")]
+
+# LISTING PARAMS
 AGENT_REFERRAL_COUPON_PARAM_NAME = "AGENT_REFERRAL_COUPON"
+LISTING_LIFE_TIME = "LISTING_LIFE_TIME"
 
 LISTING_PARAMETER_NAMES = [
     ("*", "*"),
     (AGENT_REFERRAL_COUPON_PARAM_NAME, "Agent Referral Coupon"),
+    (LISTING_LIFE_TIME, "Listing life time"),
 ]
 
 MYPROPERY_SYSTEM_MODULE_NAME = "MYPROPERTY"
@@ -70,18 +82,22 @@ VENUE_KEY = "PROPCAT007"
 LAND_KEY = "PROPCAT008"
 
 PROPERTY_CATEGORY_KEY = [
-    (APARTMENT_KEY, 'Apartment'),
-    (CONDOMINIUM_KEY, 'Condominium'),
-    (TOWNHOUSE_KEY, 'Townhouse'),
-    (VILLA_KEY, 'Villa'),
-    (SHAREHOUSE_KEY, 'Sharehouse'),
-    (COMMERCIAL_PROPERTY_KEY, 'Commercial Property'),
-    (VENUE_KEY, 'Venue'),
-    (LAND_KEY, 'Land'),
+    (APARTMENT_KEY, "Apartment"),
+    (CONDOMINIUM_KEY, "Condominium"),
+    (TOWNHOUSE_KEY, "Townhouse"),
+    (VILLA_KEY, "Villa"),
+    (SHAREHOUSE_KEY, "Sharehouse"),
+    (COMMERCIAL_PROPERTY_KEY, "Commercial Property"),
+    (VENUE_KEY, "Venue"),
+    (LAND_KEY, "Land"),
 ]
 
 OTHER_COMMERCIAL_PROPERTY_UNIT = "OTHER_UNIT"
 OFFICE_COMMERCIAL_PROPERTY_UNIT = "OFFICE_UNIT"
+COMMERCIAL_PROPERTY_UNIT_TYPES = [
+    (OTHER_COMMERCIAL_PROPERTY_UNIT, "Other unit"),
+    (OFFICE_COMMERCIAL_PROPERTY_UNIT, "Office unit"),
+]
 
 PROPERTY_TENURE_TYPES = [
     ("FREEHOLD", "Freehold"),
@@ -122,11 +138,7 @@ BUILDING_TYPES = [
 ]
 
 
-GENDER = [
-    ("MALE", "Male"),
-    ("Female", "Female"),
-    ("ANY", "Any")
-]
+GENDER = [("MALE", "Male"), ("Female", "Female"), ("ANY", "Any")]
 
 USER_GROUP_AGENT = "AGENT"
 USER_GROUP_ADMIN = "ADMIN"
@@ -134,3 +146,4 @@ USER_GROUP_ANY = "ANY"
 AGENT_REFERRAL_CODE_INITIAL = "ARC_"
 AGENT_BRANCH_CODE_INITIAL = "AB_"
 PROPERTY_CUSTOM_ID_INITIAL = "PRO_"
+PAYMENT_ORDER_INITIAL = "PN_"

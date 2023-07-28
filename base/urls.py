@@ -35,4 +35,6 @@ urlpatterns = [
     path("agents/", include("apps.agents.urls")),
     # Property module
     path("properties/", include("apps.properties.urls")),
+    # Listing module
+    path("listings/", include("apps.listings.urls")),
 ]

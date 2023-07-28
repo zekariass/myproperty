@@ -486,6 +486,11 @@ class CommercialProperty(
         verbose_name="main property",
         related_name="commercial_property",
     )
+    unit_type = models.CharField(
+        "commercial property unit type",
+        max_length=20,
+        choices=constants.COMMERCIAL_PROPERTY_UNIT_TYPES,
+    )
     has_parking_space = models.BooleanField(
         verbose_name="is the commercial property new?", default=False
     )

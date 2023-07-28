@@ -172,6 +172,20 @@ def property_video_path(instance, filename):
     return f"properties/videos/{instance.property.pk}_{now:%Y%m%d%H%M%S}_{milliseconds}{extension}"
 
 
+def bank_receipt_path(instance, filename):
+    now = timezone.now()
+    basename, extension = os.path.splitext(filename)
+    milliseconds = now.microsecond // 1000
+    return f"payments/bank_receipts/{now:%Y%m%d%H%M%S}_{milliseconds}{extension}"
+
+
+def mobile_receipt_path(instance, filename):
+    now = timezone.now()
+    basename, extension = os.path.splitext(filename)
+    milliseconds = now.microsecond // 1000
+    return f"payments/mobile_receipts/{now:%Y%m%d%H%M%S}_{milliseconds}{extension}"
+
+
 def custom_exception_handler(exc, context):
     response = exception_handler(exc, context)
 
@@ -186,3 +200,19 @@ def custom_exception_handler(exc, context):
     #         )
 
     return response
+
+
+def generate_payment_order_no():
+    characters = string.ascii_uppercase + string.digits
+    code = "".join(random.choice(characters) for _ in range(13))
+    return constants.PAYMENT_ORDER_INITIAL + code
+
+
+def get_boolean_url_query_value(request, param):
+    if param in request.query_params:
+        if request.query_params[param].lower() == "true":
+            return True
+        elif request.query_params[param].lower() == "false":
+            return False
+        else:
+            return None
