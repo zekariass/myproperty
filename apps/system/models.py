@@ -6,6 +6,7 @@ from django.contrib.auth.models import Group
 from django.utils import timezone
 from django.conf import settings
 from django.core.validators import MaxValueValidator
+from django.core.exceptions import ValidationError
 
 from apps.mixins.common_fields import (
     DescriptionAndAddedOnFieldMixin,
@@ -89,7 +90,12 @@ class SystemParameter(DescriptionAndAddedOnFieldMixin):
         related_name="system_parameters",
         related_query_name="system_parameter",
     )
-    name = models.CharField("parameter name", max_length=200, unique=True)
+    name = models.CharField(
+        "parameter name",
+        max_length=200,
+        unique=True,
+        choices=constants.SYSTEM_PARAMETER_NAMES,
+    )
     value = models.CharField(
         "parameter value",
         max_length=100,
@@ -135,6 +141,13 @@ class Currency(AddedOnFieldMixin):
     class Meta:
         verbose_name_plural = "Currencies"
 
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            existing_default_currency = Currency.objects.filter(is_default=True)
+            if existing_default_currency:
+                raise ValidationError("Default currency already exists!")
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.name}"
 
@@ -148,7 +161,12 @@ class PaymentMethod(DescriptionAndAddedOnFieldMixin):
         related_name="payment_methods",
         related_query_name="payment_method",
     )
-    name = models.CharField("payment method name", max_length=100, unique=True)
+    name = models.CharField(
+        "payment method name",
+        max_length=100,
+        unique=True,
+        choices=constants.PAYMENT_METHODS,
+    )
     approval_mode = models.CharField(
         "payment approval mode", max_length=30, choices=constants.PAYMENT_APPRIVAL_MODES
     )

@@ -37,4 +37,6 @@ urlpatterns = [
     path("properties/", include("apps.properties.urls")),
     # Listing module
     path("listings/", include("apps.listings.urls")),
+    # Payment module
+    path("payments/", include("apps.payments.urls")),
 ]

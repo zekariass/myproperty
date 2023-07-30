@@ -31,7 +31,7 @@ from apps.mixins.constants import (
     AGENT_REQUEST_TYPES,
     AGENT_REQUEST_SENDER,
     MYPROPERY_SYSTEM_MODULE_NAME,
-    AGENT_REFERRAL_COUPON_PARAM_NAME,
+    AGENT_REFERRAL_COUPON,
 )
 
 
@@ -153,7 +153,7 @@ def agent_post_save(sender, instance, created, **kwargs):
                 # GET AGENT REFERRAL COUPON LISTING PARAMETER
                 listing_param_for_agent_referral_coupon = (
                     sys_models.ListingParameter.objects.filter(
-                        name=AGENT_REFERRAL_COUPON_PARAM_NAME
+                        name=AGENT_REFERRAL_COUPON
                     ).first()
                 )
 

@@ -208,6 +208,12 @@ def generate_payment_order_no():
     return constants.PAYMENT_ORDER_INITIAL + code
 
 
+def generate_transaction_reference_number(payment_method):
+    characters = string.ascii_letters + string.digits
+    code = "".join(random.choice(characters) for _ in range(13))
+    return constants.TRANSACTION_REFERENCE_NUMBER_INITIAL[payment_method] + code
+
+
 def get_boolean_url_query_value(request, param):
     if param in request.query_params:
         if request.query_params[param].lower() == "true":
