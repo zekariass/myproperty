@@ -43,4 +43,4 @@ def voucher_payment_interface(request, sub_payment_data, paid_amount, payment):
         )
         return True
     except Exception as e:
-        raise Exception(str(e))
+        raise Exception(f"voucher_payment_interface: {str(e)}")

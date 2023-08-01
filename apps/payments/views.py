@@ -4,12 +4,19 @@ from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import (
+    ListCreateAPIView,
+    ListAPIView,
+    RetrieveUpdateDestroyAPIView,
+)
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
 from apps.system import models as sys_models
+from apps.listings import models as listing_models
+from apps.agents.models import AgentBranch, AgentServiceSubscription
+from apps.notifications.notif_interfaces import email, helpers
 
 from apps.mixins import functions, constants
 
@@ -19,18 +26,11 @@ from . import serializers as pay_serializers
 from .apis import bank_transfer, voucher_payment, card_payment
 from .apis.mobile_apis import mobile_payment
 
-# from . import api as payment_api
 
-# from apps.mixins.permissions import IsAgentOrReadOnly
-
-
-def update_coupon(coupon_instance):
-    sys_models.Coupon.objects.update(
-        id=coupon_instance.id, use_count=F("use_count") + 1
-    )
+agent_nitification_preferences = []
+agent_nitification_channel_preferences = []
 
 
-# Create your views here.
 class ListCreatePaymentView(ListCreateAPIView):
     serializer_class = pay_serializers.PaymentSerializer
     permission_classes = [IsAdminUser, IsAuthenticated]
@@ -51,179 +51,501 @@ class ListCreatePaymentView(ListCreateAPIView):
                 # GET SUB-PAYMENT DATA, SUCH AS BANK TRANSFER DATA
                 sub_payment_data = request.data.pop("sub_payment")
 
-                # CHECK IF INCOMING DATA HAS COUPON AND COUPON IS NOT NULL
-                coupon_instance = None
-                coupon_value = 0
-                if "coupon" in payment_data and payment_data["coupon"] is not None:
-                    # GET COUPON FROM DATABASE
-                    try:
-                        coupon_instance = sys_models.Coupon.objects.get(
-                            id=payment_data["coupon"]
+                if "requested_by" not in request.data:
+                    raise Exception(
+                        f"'requested_by' is not proveded. Who is this payment from?"
+                    )
+
+                # GET WHO IS MAKING THE PAYMENT, i.e, user, agent
+                requested_by = request.data.pop("requested_by")
+
+                # IF PAYMENT IS REQUESTED BY AGENT
+                if (
+                    requested_by["by"].lower()
+                    == constants.PAYMENT_REQUESTED_BY_AGENT.lower()
+                ):
+                    # GET THE PAYMENT PURPOSE FROM THE INCOMING DATA
+                    agent_branch_id = requested_by.get("agent_branch")
+
+                    # GET THE SERVICE SUBSCRIPTION IF PAYMENT IS FOR SERVICE SUBSCRIPTION
+                    service_subscription_instance = None
+                    if (
+                        "service_subscription" in request.data
+                        and request.data["service_subscription"]
+                    ):
+                        service_subscription_id = request.data.get(
+                            "service_subscription"
                         )
+                        # GET SERVICE SUBSCRIPTION FROM DB
+                        try:
+                            service_subscription_instance = (
+                                AgentServiceSubscription.objects.select_related(
+                                    "agent", "payment"
+                                ).get(id=service_subscription_id)
+                            )
+
+                        except:
+                            raise Exception(
+                                f"Agent Service Subscription with id {service_subscription_id} not found!"
+                            )
+
+                    # GET AGENT FROM DB
+                    try:
+                        agent_branch_instance = AgentBranch.objects.select_related(
+                            "agent"
+                        ).get(id=agent_branch_id)
                     except:
                         raise Exception(
-                            f"Coupon with id {payment_data['coupon']} does not exist."
+                            f"Agent branch with id {agent_branch_id} not found!"
                         )
 
-                    #
+                    # GET AGENT NOTIFICATION AND CHANNEL PREFERENCES AND SET THE GLOBAL VARIABLES
+                    global agent_nitification_preferences, agent_nitification_channel_preferences
+                    agent_nitification_channel_preferences = (
+                        helpers.get_agent_notification_channel_preferences(
+                            agent_branch_instance.agent
+                        )
+                    )
+                    agent_nitification_preferences = (
+                        helpers.get_agent_notification_preferences(
+                            agent_branch_instance.agent
+                        )
+                    )
+
+                    # EMAIL RECIEPIENTS FOR PAYMENT ORDER AND APPROVAL CONFIRMATION
+                    email_receipients = []
+                    email_receipients.append(agent_branch_instance.email)
+
+                    # GENERATE UNIQUE PAYMENT ORDER NUMBER FOR THE PAYMENT
+                    payment_order_number = functions.generate_payment_order_no()
+
+                    # GET THE DEFAULT CURRENCY AS CURRENCY OF PAYMENT FROM CURRENCY TABLE, OTHERWISE NONE
+                    default_currency = (
+                        sys_models.Currency.objects.filter(is_default=True).first()
+                        or None
+                    )
+
+                    # DESERIALISE THE PAYMENT DATA FOR VALIDATION
+                    payment_serializer = self.get_serializer(data=payment_data)
+
+                    # CHECK IF PAYMENT DATA IS VALID, RAISE EXCEPTION OTHERWISE
+                    payment_serializer.is_valid(raise_exception=True)
+
+                    # CHECK IF INCOMING DATA HAS COUPON AND COUPON IS NOT NULL
+                    coupon_instance = None
+                    coupon_value = 0
+                    if "coupon" in payment_data and payment_data["coupon"] is not None:
+                        # GET COUPON FROM DATABASE
+                        try:
+                            coupon_instance = sys_models.Coupon.objects.get(
+                                id=payment_data["coupon"]
+                            )
+                        except:
+                            raise Exception(
+                                f"Coupon with id {payment_data['coupon']} does not exist."
+                            )
+
+                        coupon_process_result = process_coupon_discount(
+                            self.request,
+                            coupon_instance,
+                            payment_serializer,
+                            payment_order_number,
+                            default_currency,
+                            email_receipients,
+                            agent_branch_instance,
+                        )
+                        if isinstance(coupon_process_result, Response):
+                            return coupon_process_result
+                        coupon_value = coupon_process_result
+                    # CALCULATE ACTUAL PAYMENT VALUE, WHICH AFTER COUPON VALUE IS DEDUCTED
+                    actual_payment_value = payment_data["total_amount"] - coupon_value
+
+                    # SAVE MAIN PAYMENT DATA
+                    payment_instance = save_main_payment(
+                        payment_serializer,
+                        order_no=payment_order_number,
+                        currency=default_currency,
+                        coupon=coupon_instance,
+                    )
+
+                    # UPDATE RELATED TABLE, SUCH AS LISTING, FOR THE PAYMENT BASED ON PAYMENT PURPOSE.
+                    update_related_instance = (
+                        update_related_table_based_on_payment_purpose(
+                            self.request,
+                            payment_instance=payment_instance,
+                            agent_branch_instance=agent_branch_instance,
+                            service_subscription_instance=service_subscription_instance,
+                        )
+                    )
+
+                    # SEND PAYMENT ORDER RECIEVED EMAIL
+                    email.send_payment_order_recieved_email_to_agent(
+                        email_receipients,
+                        payment_instance.order_no,
+                        payment_data["payment_purpose"],
+                        agent_branch_instance,
+                        agent_nitification_preferences,
+                        agent_nitification_channel_preferences,
+                        constants.NOTIFICATION_TOPIC_PAYMENT_ORDER_REQUESTED,
+                    )
+
+                    # PROCESS SUB PAYMENT DATA, SUCH AS BANK TRANSFER, CARD PAYMENT, ETC
+                    # CHECK THE PAYMENT METHOD AND DECIDE WICH INTERFACE TO CALL
+                    sub_payment_save_response = None
+
                     if (
-                        coupon_instance.discount_fixed_value <= 0
-                        and coupon_instance.discount_percentage_value <= 0
+                        payment_instance.payment_method.name
+                        == constants.PAYMENT_METHOD_BANK_TRANSFER
                     ):
-                        raise Exception(
-                            f"Coupon: {coupon_instance.code} has no discount value."
+                        # CALL BANK TRANSFER INTERFACE
+                        sub_payment_save_response = (
+                            bank_transfer.bank_transfer_interface(
+                                request=self.request,
+                                sub_payment_data=sub_payment_data,
+                                paid_amount=actual_payment_value,
+                                payment=payment_instance,
+                            )
                         )
-                    if coupon_instance.use_count >= coupon_instance.total_use:
-                        raise Exception(
-                            f"Coupon: {coupon_instance.code} has been overused."
+                    elif (
+                        payment_instance.payment_method.name
+                        == constants.PAYMENT_METHOD_VOUCHER
+                    ):
+                        # CALL VOUCHER PAYMENT INTERFACE
+                        sub_payment_save_response = (
+                            voucher_payment.voucher_payment_interface(
+                                request=self.request,
+                                sub_payment_data=sub_payment_data,
+                                paid_amount=actual_payment_value,
+                                payment=payment_instance,
+                            )
                         )
-                    if coupon_instance.expire_on <= timezone.now():
-                        raise Exception(
-                            f"Coupon: {coupon_instance.code} has been outdated."
-                        )
-                    if coupon_instance.start_on > timezone.now():
-                        raise Exception(
-                            f"Coupon: {coupon_instance.code} will be activate on {coupon_instance.start_on.date}."
-                        )
-
-                    # CALCULATE THE COUPON VALUE TO BE DEDUCTED FROM TOTAL_AMOUNT
-                    coupon_value = (
-                        coupon_instance.discount_percentage_value
-                        * Decimal(0.01)
-                        * payment_data["total_amount"]
-                        + coupon_instance.discount_fixed_value
-                    )
-
-                    # sys_models.Coupon.objects.update(
-                    #     id=coupon_instance.id, use_count=F("use_count") + 1
-                    # )
-
-                    # RETURN "PAYMENT SUCCESSFUL" IF COUPON HAS FULL DISCOUNT
-                    # INCLUDING THE PERCENTAGE RATE AND FIXED RATE
-                    if coupon_value >= payment_data["total_amount"]:
-                        update_coupon(coupon_instance)
-                        return Response(
-                            {
-                                "detail": {
-                                    "message": "Payment successful",
-                                    "data": "COUPON_COVERED",
-                                }
-                            },
-                            status=status.HTTP_200_OK,
-                        )
-                # CALCULATE ACTUAL PAYMENT VALUE, WHICH IS AFTER COUPON VALUE IS DEDUCTED
-                actual_payment_value = payment_data["total_amount"] - coupon_value
-
-                # GENERATE UNIQUE PAYMENT ORDER NUMBER
-                payment_order_number = functions.generate_payment_order_no()
-
-                # SET THE DEFAULT CURRENCY AS CURRENCY OF PAYMENT, OTHERWISE NONE
-                default_currency = (
-                    sys_models.Currency.objects.filter(is_default=True).first() or None
-                )
-
-                # DESERIALISE THE PAYMENT DATA
-                payment_serializer = self.get_serializer(data=payment_data)
-
-                # CHECK IF PAYMENT DATA IS VALID, RAISE EXCEPTION OTHERWISE
-                payment_serializer.is_valid(raise_exception=True)
-
-                # SAVE MAIN PAYMENT DATA
-                # try:
-                payment_instance = payment_serializer.save(
-                    order_no=payment_order_number,
-                    currency=default_currency,
-                    coupon=coupon_instance,
-                )
-                # except Exception as e:
-                #     return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-                # PROCESS SUB PAYMENT DATA, SUCH AS BANK TRANSFER, CARD PAYMENT, ETC
-                # CHECK THE PAYMENT METHOD AND DECIDE WICH INTERFACE TO CALL
-                sub_payment_save_response = None
-
-                if (
-                    payment_instance.payment_method.name
-                    == constants.PAYMENT_METHOD_BANK_TRANSFER
-                ):
-                    # CALL BANK TRANSFER INTERFACE
-                    sub_payment_save_response = bank_transfer.bank_transfer_interface(
-                        request=self.request,
-                        sub_payment_data=sub_payment_data,
-                        paid_amount=actual_payment_value,
-                        payment=payment_instance,
-                    )
-                elif (
-                    payment_instance.payment_method.name
-                    == constants.PAYMENT_METHOD_VOUCHER
-                ):
-                    # CALL VOUCHER PAYMENT INTERFACE
-                    sub_payment_save_response = (
-                        voucher_payment.voucher_payment_interface(
+                    elif (
+                        payment_instance.payment_method.name
+                        == constants.PAYMENT_METHOD_CARD_PAYMENT
+                    ):
+                        # CALL CARD PAYMENT INTERFACE
+                        sub_payment_save_response = card_payment.card_payment_interface(
                             request=self.request,
                             sub_payment_data=sub_payment_data,
                             paid_amount=actual_payment_value,
                             payment=payment_instance,
                         )
-                    )
-                elif (
-                    payment_instance.payment_method.name
-                    == constants.PAYMENT_METHOD_CARD_PAYMENT
-                ):
-                    # CALL CARD PAYMENT INTERFACE
-                    sub_payment_save_response = card_payment.card_payment_interface(
-                        request=self.request,
-                        sub_payment_data=sub_payment_data,
-                        paid_amount=actual_payment_value,
-                        payment=payment_instance,
-                    )
-                elif (
-                    payment_instance.payment_method.name
-                    == constants.PAYMENT_METHOD_MOBILE_PAYMENT
-                ):
-                    # CALL MOBILE PAYMENT INTERFACE
-                    sub_payment_save_response = mobile_payment.mobile_payment_interface(
-                        request=self.request,
-                        sub_payment_data=sub_payment_data,
-                        paid_amount=actual_payment_value,
-                        payment=payment_instance,
-                        service_provider="",
-                    )
+                    elif (
+                        payment_instance.payment_method.name
+                        == constants.PAYMENT_METHOD_MOBILE_PAYMENT
+                    ):
+                        # CALL MOBILE PAYMENT INTERFACE
+                        sub_payment_save_response = (
+                            mobile_payment.mobile_payment_interface(
+                                request=self.request,
+                                sub_payment_data=sub_payment_data,
+                                paid_amount=actual_payment_value,
+                                payment=payment_instance,
+                                service_provider="",
+                            )
+                        )
 
-                # IF THE SUB-PAYMENT INTERFACE RETURN RESPONSE OBJECT, RETURN TO THE CLIENT DIERECTLY
-                # SUB-PAYMENT INTERFACE RETURN RESPONSE OBJECT INCASE OF ERRORS
-                if isinstance(sub_payment_save_response, Response):
-                    return sub_payment_save_response
+                    # SUB-PAYMENT INTERFACE RETURN TRUE/FALSE BOOLEAN.
+                    # TRUE INCASE OF SUCCESSFUL PAYMENT, OTHERWISE FALSE
+                    # RETURN RESPONSE WITH "PAYMENT SUCCESSFUL" IF TRUE IS RETURNED
+                    if (
+                        isinstance(sub_payment_save_response, bool)
+                        and sub_payment_save_response
+                    ):
+                        # UPDATE COUPON USE COUNT IF COUPON VALUE IS > 0
+                        if coupon_value > 0 and coupon_instance:
+                            update_coupon(coupon_instance)
 
-                # OTHERWISE SUB-PAYMENT INTERFACE RETURN TRUE/FALSE BOOLEAN.
-                # TRUE INCASE OF SUCCESSFUL PAYMENT, OTHERWISE FALSE
-                # RETURN RESPONSE WITH "PAYMENT SUCCESSFUL" IF TRUE IS RETURNED
-                elif (
-                    isinstance(sub_payment_save_response, bool)
-                    and sub_payment_save_response
-                ):
-                    # UPDATE COUPON USE COUNT IF COUPON VALUE IS > 0
-                    if coupon_value > 0:
-                        update_coupon(coupon_instance)
-                    return Response(
-                        {
-                            "detail": {
-                                "message": "Payment successful",
-                                "data": payment_serializer.data,
-                            }
-                        },
-                        status=status.HTTP_200_OK,
-                    )
+                        # APPROVE THE PAYMENT IF PAYMENT IS SUCCESSFUL AND PAYMENT APPROVAL MODE OF PAYMENT METHOD IS AUTO
+                        if (
+                            payment_instance.payment_method.approval_mode
+                            == constants.PAYMENT_APPROVAL_MODE_AUTO
+                        ):
+                            updated_payment_instance = approve_payment(payment_instance)
 
-                elif (
-                    isinstance(sub_payment_save_response, bool)
-                    and not sub_payment_save_response
-                ):
-                    # IF SUB-PAYMENT INTERFACE RETURN FALSE, THEN PAYMENT IS NOT SUCCESSFUL,
-                    # SO RAISE EXCEPTION SO THAT THE WHOLE OPERTAION TO BE ROLLED BACK AS IT IS ATOMIC
-                    raise Exception(
-                        f"Payment with {payment_instance.payment_method.name} is not successful. Try again!"
-                    )
+                            # UPDATE is-featured and featured_on OF LISTING, IF PAYMENT PURPOSE IS FEATURING
+                            if (
+                                request.data["payment_purpose"]
+                                == constants.PAYMENT_PURPOSE_FEATURING
+                            ):
+                                update_listing_featured_status(update_related_instance)
+
+                        # RETURN SUCCESS TO THE CLIENT
+                        return Response(
+                            {
+                                "detail": {
+                                    "message": "Payment successful",
+                                    "data": payment_serializer.data,
+                                }
+                            },
+                            status=status.HTTP_200_OK,
+                        )
+
+                    elif (
+                        isinstance(sub_payment_save_response, bool)
+                        and not sub_payment_save_response
+                    ):
+                        # IF SUB-PAYMENT INTERFACE RETURN FALSE, THEN PAYMENT IS NOT SUCCESSFUL,
+                        # SO RAISE EXCEPTION SO THAT THE WHOLE OPERTAION TO BE ROLLED BACK AS IT IS ATOMIC
+                        raise Exception(
+                            f"Payment with {payment_instance.payment_method.name} is not successful. Try again!"
+                        )
+
             # RETURN ERROR IF ANY EXCEPTION IS RAISED
             except Exception as e:
                 return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+def update_listing_featured_status(update_related_instance):
+    update_related_instance.is_featured = True
+    update_related_instance.featured_on = timezone.now()
+    update_related_instance.save()
+
+
+def update_coupon(coupon_instance):
+    sys_models.Coupon.objects.update(
+        id=coupon_instance.id, use_count=F("use_count") + 1
+    )
+
+
+def process_coupon_discount(
+    request,
+    coupon_instance,
+    payment_serializer,
+    payment_order_number,
+    default_currency,
+    email_receipients,
+    agent_branch_instance,
+):
+    payment_data = request.data
+    # GET COUPON FROM DATABASE
+
+    # CHECK COUPON VALIDITY FOR THIS PAYMENT
+    if (
+        coupon_instance.discount_fixed_value <= 0
+        and coupon_instance.discount_percentage_value <= 0
+    ):
+        raise Exception(f"Coupon: {coupon_instance.code} has no discount value.")
+    if coupon_instance.use_count >= coupon_instance.total_use:
+        raise Exception(f"Coupon: {coupon_instance.code} has been overused.")
+    if coupon_instance.expire_on <= timezone.now():
+        raise Exception(f"Coupon: {coupon_instance.code} has been outdated.")
+    if coupon_instance.start_on > timezone.now():
+        raise Exception(
+            f"Coupon: {coupon_instance.code} will be activate on {coupon_instance.start_on.date}."
+        )
+
+    # CALCULATE THE COUPON VALUE TO BE DEDUCTED FROM TOTAL_AMOUNT
+    coupon_value = (
+        coupon_instance.discount_percentage_value
+        * Decimal(0.01)
+        * payment_data["total_amount"]
+        + coupon_instance.discount_fixed_value
+    )
+
+    # RETURN "PAYMENT SUCCESSFUL" IF COUPON HAS FULL DISCOUNT
+    # CALCULATED FROM THE PERCENTAGE RATE AND FIXED RATE
+    if coupon_value >= payment_data["total_amount"]:
+        update_coupon(coupon_instance)
+        # SAVE MAIN PAYMENT DATA,
+        payment_instance = save_main_payment(
+            payment_serializer,
+            order_no=payment_order_number,
+            currency=default_currency,
+            coupon=coupon_instance,
+        )
+
+        updated_instance = update_related_table_based_on_payment_purpose(
+            request, payment_instance=payment_instance
+        )
+
+        # UPDATE LISTING FEATURED STATUS IF PAYMENT IS MADE FOR FEATURING AND
+        # IT IS A FULLY DISCOUNTED PAYMENT
+        if payment_data["payment_purpose"] == constants.PAYMENT_PURPOSE_FEATURING:
+            update_listing_featured_status(updated_instance)
+
+        # SEND PAYMENT ORDER RECIEVED EMAIL
+        email.send_payment_order_recieved_email_to_agent(
+            email_receipients,
+            payment_order_number,
+            payment_data["payment_purpose"],
+            agent_branch_instance,
+            agent_nitification_preferences,
+            agent_nitification_channel_preferences,
+            constants.NOTIFICATION_TOPIC_PAYMENT_ORDER_REQUESTED,
+        )
+
+        # SEND PAYMENT APPROVED EMAIL
+        email.send_payment_approved_email_to_agent(
+            email_receipients,
+            payment_order_number,
+            payment_data["payment_purpose"],
+            agent_branch_instance,
+            agent_nitification_preferences,
+            agent_nitification_channel_preferences,
+            constants.NOTIFICATION_TOPIC_PAYMENT_ORDER_APPROVED,
+        )
+
+        # APPROVE PAYMENT SINCE IT IS FULL COUPON DISCOUTED
+        updated_payment_instance = approve_payment(payment_instance)
+        # AND REPLY SUCCESSFUL MESSAGE
+        return Response(
+            {
+                "detail": {
+                    "message": "Payment successful",
+                    "data": "COUPON_COVERED",
+                }
+            },
+            status=status.HTTP_200_OK,
+        )
+    return coupon_value
+
+
+def update_related_table_based_on_payment_purpose(
+    request,
+    payment_instance=None,
+    agent_branch_instance=None,
+    service_subscription_instance=None,
+):
+    payment_purpose = request.data["payment_purpose"]
+    updated_instance = None
+    if payment_purpose == constants.PAYMENT_PURPOSE_LISTING:
+        # UPDATE LISTING TABLE FOR LISTING PAYMENT
+        try:
+            listing_instance = listing_models.Listing.objects.get(
+                id=request.data["listing"]
+            )
+            listing_instance.listing_payment = payment_instance
+            listing_instance.save()
+        except Exception as e:
+            raise Exception(
+                f"Update Listing: Something went wrong when updating Listing. {str(e)}"
+            )
+        updated_instance = listing_instance
+
+    elif payment_purpose == constants.PAYMENT_PURPOSE_FEATURING:
+        # UPDATE LISTING TABLE FOR FEATURING PAYMENT
+        try:
+            listing_instance = listing_models.Listing.objects.get(
+                id=request.data["listing"]
+            )
+            listing_instance.featuring_payment = payment_instance
+            # listing_instance.is_featured = True
+            listing_instance.save()
+        except Exception as e:
+            raise Exception(
+                f"Update Listing: Something went wrong when updating Listing, {str(e)}"
+            )
+        updated_instance = listing_instance
+
+    elif (
+        payment_purpose == constants.PAYMENT_PURPOSE_SUBSCRIPTION
+        and service_subscription_instance
+    ):
+        # UPDATE AGENT SERVICE SUBSCRIPTION TABLE
+        try:
+            service_subscription_instance = payment_instance
+            service_subscription_instance.save()
+
+        except Exception as e:
+            raise Exception(
+                f"Update Service Subscription: Something went wrong when updating Agent Service Subscription. {str(e)}"
+            )
+        updated_instance = listing_instance
+    return updated_instance
+
+
+def save_main_payment(payment_serializer, **kwargs):
+    payment_instance = payment_serializer.save(**kwargs)
+    return payment_instance
+
+
+class UnapprovedPaymentListView(ListAPIView):
+    serializer_class = pay_serializers.PaymentSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        queryset = pay_models.Payment.objects.filter(is_approved=False)
+        return queryset
+
+
+class ApprovedPaymentListView(ListAPIView):
+    serializer_class = pay_serializers.PaymentSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        queryset = pay_models.Payment.objects.filter(is_approved=True)
+        return queryset
+
+
+class ApprovePaymentView(RetrieveUpdateDestroyAPIView):
+    queryset = pay_models.Payment.objects.all()
+    serializer_class = pay_serializers.PaymentSerializer
+    permission_classes = [IsAdminUser]
+
+    def update(self, request, pk):
+        # TO BE ABLE TO SEND CONFIRMATION EMAIL TO THE AGENT BRANCH, CLIENT MUST SEND AGENT BRANCH ID
+        # WHICH IS ASSOCIATED WITH THE PAYMENT
+        agent_branch_id = None
+        if "agent_branch" in request.data:
+            agent_branch_id = request.data.get("agent_branch")
+        try:
+            payment_instance = pay_models.Payment.objects.get(pk=pk)
+            if payment_instance.is_approved:
+                return Response(
+                    {"detail": "Payment already approved."}, status=status.HTTP_200_OK
+                )
+            updated_instance = approve_payment(payment_instance)
+
+        except Exception as e:
+            return Response(
+                {
+                    "errors": f"Something went wrong when updating payment approval status. {str(e)}"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # SEND APPROVAL CONFIRMATION EMAIL IF AGENT BRANCH IS PROVIDED
+        if agent_branch_id:
+            agent_branch_instance = AgentBranch.objects.filter(id=agent_branch_id)
+
+            if agent_branch_instance.exists():
+                # GET AGENT NOTIFICATION AND CHANNEL PREFERENCES AND SET THE GLOBAL VARIABLES
+                global agent_nitification_preferences, agent_nitification_channel_preferences
+                agent_nitification_channel_preferences = (
+                    helpers.get_agent_notification_channel_preferences(
+                        agent_branch_instance.agent
+                    )
+                )
+                agent_nitification_preferences = (
+                    helpers.get_agent_notification_preferences(
+                        agent_branch_instance.agent
+                    )
+                )
+                email_reciepient = [agent_branch_instance.first().email]
+                email.send_payment_approved_email_to_agent(
+                    email_reciepient,
+                    updated_instance.order_no,
+                    updated_instance.payment_purpose,
+                    agent_branch_instance.first(),
+                    agent_nitification_preferences,
+                    agent_nitification_channel_preferences,
+                    constants.NOTIFICATION_TOPIC_PAYMENT_ORDER_APPROVED,
+                )
+        return Response(
+            {
+                "detail": "Approved.",
+                "data": self.get_serializer(instance=updated_instance).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+def approve_payment(payment_instance):
+    """
+    Set is_approved to True and approved_on to the current date
+    """
+    payment_instance.is_approved = True
+    payment_instance.approved_on = timezone.now().date()
+    payment_instance.save()
+    return payment_instance

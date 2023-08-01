@@ -32,7 +32,7 @@ class Listing(DescriptionAndAddedOnFieldMixin, ExpireOnFieldMixin):
     main_property = models.ForeignKey(prop_models.Property, on_delete=models.CASCADE)
     listing_payment = models.ForeignKey(
         pay_models.Payment,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name="listings",
         null=True,
         blank=True,
@@ -41,7 +41,7 @@ class Listing(DescriptionAndAddedOnFieldMixin, ExpireOnFieldMixin):
     is_listed_by_subscription = models.BooleanField(default=False)
     featuring_payment = models.ForeignKey(
         pay_models.Payment,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name="featured_listings",
         null=True,
         blank=True,

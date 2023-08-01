@@ -168,7 +168,7 @@ class PaymentMethod(DescriptionAndAddedOnFieldMixin):
         choices=constants.PAYMENT_METHODS,
     )
     approval_mode = models.CharField(
-        "payment approval mode", max_length=30, choices=constants.PAYMENT_APPRIVAL_MODES
+        "payment approval mode", max_length=30, choices=constants.PAYMENT_APPROVAL_MODES
     )
 
     def __str__(self):
@@ -392,20 +392,28 @@ class NotificationTopic(DescriptionAndAddedOnFieldMixin):
         related_name="notification_topics",
         related_query_name="notification_topic",
     )
-    name = models.CharField("topic name", max_length=200)
-    target_group = models.ForeignKey(
-        Group,
-        on_delete=models.CASCADE,
-        related_name="notification_topics",
-        related_query_name="notification_topic",
+    name = models.CharField(
+        "topic name", max_length=200, choices=constants.NOTIFICATION_TOPICS
+    )
+    # target_group = models.ForeignKey(
+    #     Group,
+    #     on_delete=models.CASCADE,
+    #     related_name="notification_topics",
+    #     related_query_name="notification_topic",
+    #     help_text="The target user group that this notifications to be sent \
+    #                                     to with is topic",
+    # )
+    target_group = models.CharField(
+        max_length=30,
         help_text="The target user group that this notifications to be sent \
                                         to with is topic",
+        choices=constants.NOTIFICATION_TARGET_GROUPS,
     )
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=("system", "name"),
+                fields=("target_group", "name"),
                 name="notification_topic_unique_together_constraint",
             )
         ]

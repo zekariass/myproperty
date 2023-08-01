@@ -39,4 +39,6 @@ urlpatterns = [
     path("listings/", include("apps.listings.urls")),
     # Payment module
     path("payments/", include("apps.payments.urls")),
+    # Notification module
+    path("notifications/", include("apps.notifications.urls")),
 ]

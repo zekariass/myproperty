@@ -21,3 +21,13 @@ class IsAgentOrReadOnly(permissions.BasePermission):
             return True
         else:
             return False
+
+
+class IsAgent(permissions.BasePermission):
+    def has_permission(self, request, view):
+        groups = request.user.groups.all()
+        group_name = [g.name for g in groups]
+        if constants.USER_GROUP_AGENT in group_name:
+            return True
+        else:
+            return False

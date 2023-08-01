@@ -67,14 +67,26 @@ class PaymentSerializer(serializers.ModelSerializer):
 
     def get_sub_payment(self, obj):
         if obj.payment_method.name == constants.PAYMENT_METHOD_BANK_TRANSFER:
-            sub_payment_instance = pay_models.BankTransfer.objects.get(payment=obj.id)
-            return BankTransferSerializer(instance=sub_payment_instance).data
+            sub_payment = pay_models.BankTransfer.objects.filter(payment=obj.id)
+            if sub_payment.exists:
+                return BankTransferSerializer(instance=sub_payment.first()).data
+            else:
+                return {}
         elif obj.payment_method.name == constants.PAYMENT_METHOD_VOUCHER:
-            sub_payment_instance = pay_models.VoucherPayment.objects.get(payment=obj.id)
-            return VoucherSerializer(instance=sub_payment_instance).data
+            sub_payment = pay_models.VoucherPayment.objects.filter(payment=obj.id)
+            # if sub_payment.exists:
+            return VoucherSerializer(instance=sub_payment.first()).data
+            # else:
+            #     return None
         elif obj.payment_method.name == constants.PAYMENT_METHOD_MOBILE_PAYMENT:
-            sub_payment_instance = pay_models.MobilePayment.objects.get(payment=obj.id)
-            return MobileSerializer(instance=sub_payment_instance).data
+            sub_payment = pay_models.MobilePayment.objects.get(payment=obj.id)
+            if sub_payment.exists:
+                return MobileSerializer(instance=sub_payment.first()).data
+            else:
+                return {}
         elif obj.payment_method.name == constants.PAYMENT_METHOD_CARD_PAYMENT:
-            sub_payment_instance = pay_models.CardPayment.objects.get(payment=obj.id)
-            return CardPaymentSerializer(instance=sub_payment_instance).data
+            sub_payment = pay_models.CardPayment.objects.get(payment=obj.id)
+            if sub_payment.exists:
+                return CardPaymentSerializer(instance=sub_payment.first()).data
+            else:
+                return {}

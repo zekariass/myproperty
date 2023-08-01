@@ -5,10 +5,11 @@ from apps.system import models as sys_models
 from apps.agents.models import AgentServiceSubscription
 from apps.mixins.common_fields import AddedOnFieldMixin
 from apps.mixins.functions import mobile_receipt_path, bank_receipt_path
+from apps.mixins.constants import PAYMENT_PURPOSES
 
 
 class Payment(AddedOnFieldMixin):
-    order_no = models.CharField("order number", max_length=15)
+    order_no = models.CharField("order number", max_length=20)
     payment_method = models.ForeignKey(
         sys_models.PaymentMethod, on_delete=models.SET_NULL, null=True
     )
@@ -27,7 +28,7 @@ class Payment(AddedOnFieldMixin):
         max_digits=10, decimal_places=5, max_length=10, default=1.00000
     )
     coupon = models.ForeignKey(sys_models.Coupon, on_delete=models.SET_NULL, null=True)
-    payment_purpose = models.CharField(max_length=250, null=True, blank=True)
+    payment_purpose = models.CharField(max_length=250, choices=PAYMENT_PURPOSES)
     is_approved = models.BooleanField(
         "is payment approved",
         default=False,
@@ -52,7 +53,7 @@ class VoucherPayment(AddedOnFieldMixin):
     paid_amount = models.DecimalField(max_digits=15, decimal_places=5, default=0.00000)
 
     def __str__(self) -> str:
-        return f"Voucher: {self.voucher}, {self.paid_amount}"
+        return f"Voucher: {self.voucher.code}, {self.paid_amount}"
 
 
 class BankTransfer(AddedOnFieldMixin):

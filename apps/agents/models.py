@@ -4,7 +4,7 @@ import datetime
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import post_save
-from django.db.models import F, Case, When
+from django.db.models import F
 from django.db import transaction
 from django.dispatch import receiver
 
@@ -14,6 +14,8 @@ from django.conf import settings
 
 from apps.commons import models as cmns_models
 from apps.system import models as sys_models
+
+# from apps.payments.models import Payment
 
 from apps.mixins.common_fields import (
     AddedOnFieldMixin,
@@ -459,14 +461,16 @@ class AgentServiceSubscription(AddedOnFieldMixin, StartAndExpireOnFieldMixin):
         related_query_name="service_subscription",
     )
     subscription_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    subscription_currency = models.ForeignKey(
-        sys_models.Currency, on_delete=models.SET_NULL, null=True
+    # subscription_currency = models.ForeignKey(
+    #     sys_models.Currency, on_delete=models.SET_NULL, null=True
+    # )
+    payment = models.ForeignKey(
+        "payments.Payment", on_delete=models.SET_NULL, null=True, blank=True
     )
-    # payment = models.ForeignKey(pay_models.Payment, on_delete=models.CASCADE)
 
     @property
     def has_active_subscription(self):
-        return self.expire_on > timezone.now()
+        return self.expire_on > timezone.now() and self.payment.is_approved
 
     def __str__(self):
         return f"{self.agent.name}: {self.subscription_amount}"
