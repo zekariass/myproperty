@@ -4,9 +4,12 @@ from django.db import models
 from django.utils import timezone
 from django.core.validators import MinValueValidator
 from django.db import IntegrityError
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 from apps.agents import models as agnt_models
 from apps.commons import models as cmn_models
+from apps.properties.tasks import send_new_property_added_email_to_agent
 from apps.system import models as sys_models
 from apps.mixins.common_fields import (
     AddedOnFieldMixin,

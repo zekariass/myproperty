@@ -2,6 +2,7 @@ from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from apps.commons.models import Tag
 
 from apps.mixins import constants
 
@@ -28,6 +29,7 @@ class ListingSerializer(ModelSerializer):
     is_approved = serializers.SerializerMethodField(read_only=True)
     is_featuring_approved = serializers.SerializerMethodField(read_only=True)
     agent = serializers.SerializerMethodField(read_only=True)
+    tags = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = listing_models.Listing
@@ -47,6 +49,7 @@ class ListingSerializer(ModelSerializer):
             "featured_on",
             "is_featuring_approved",
             "listing_type_data",
+            "tags",
             "agent_branch",
             "agent",
             "main_property",
@@ -65,6 +68,7 @@ class ListingSerializer(ModelSerializer):
             "main_property",
             "agent_branch",
             "agent",
+            "listing_payment_type",
         ]
 
     def get_listing_type_data(self, obj):
@@ -86,6 +90,24 @@ class ListingSerializer(ModelSerializer):
 
     def get_agent(self, obj):
         return obj.agent
+
+    def get_tags(self, obj):
+        # GET TAGS THAT CAN BE APPLIED TO LISTING
+        tags = Tag.objects.filter(apply_to=constants.TAG_APPLY_TO_LISTING)
+
+        # LOCAL VARIABLES TO BE PASSED TO EXEC FUNCTION
+        locals = {"listing": obj, "timezone": timezone}
+
+        # LISTING TAGS THAT CAN BE ATTACHED TO THE LISTING
+        listing_tags = []
+
+        # GET THE RESULT FROM LOCALS NAMESPACE FOR EACH TAG. THE RESULT OF
+        # THE CONDITION WILL BE BOOLEAN
+        for tag in tags:
+            exec(tag.condition_code, locals)
+            if locals["result"]:
+                listing_tags.append(tag.name)
+        return listing_tags
 
 
 class ApartmentUnitListingSerializer(ModelSerializer):

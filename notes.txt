@@ -1,0 +1,12 @@
+Packages and applications to intall 
+
+####################################
+Django Task Queue and Scheduling
+
+** Celery
+** django-celery-beat
+** Redis or RabbitMQ(Message Broker. can also use RabbitMQ)
+** Flower
+
+** djano-celery-results (To store task results)
+####################################

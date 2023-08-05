@@ -1,4 +1,5 @@
 from django.db import models
+from apps.mixins import constants
 from apps.mixins.common_fields import AddedOnFieldMixin, DescriptionAndAddedOnFieldMixin
 
 
@@ -46,15 +47,20 @@ class Address(AddedOnFieldMixin):
 
 class Tag(DescriptionAndAddedOnFieldMixin):
     name = models.CharField("tag name", max_length=100)
-    affixing_period_in_days = models.IntegerField(default=1)
+    condition_code = models.TextField(
+        help_text="It can be if condition or anything else."
+    )
+    apply_to = models.CharField(
+        "tag name", max_length=50, choices=constants.TAG_APPLY_TO
+    )
 
     def __str__(self) -> str:
         return f"{self.name}"
 
 
-class TagApplyTo(AddedOnFieldMixin):
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
-    apply_to = models.CharField("tag name", max_length=100)
+# class TagApplyTo(AddedOnFieldMixin):
+#     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
+#     apply_to = models.CharField("tag name", max_length=100)
 
-    def __str__(self) -> str:
-        return f"{self.tag.name} applies to: {self.apply_to}"
+#     def __str__(self) -> str:
+#         return f"{self.tag.name} applies to: {self.apply_to}"

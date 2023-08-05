@@ -1,4 +1,5 @@
 from datetime import timedelta
+from django.forms import model_to_dict
 from django.shortcuts import render
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
@@ -6,12 +7,12 @@ from django.utils import timezone
 from rest_framework.generics import (
     ListCreateAPIView,
     ListAPIView,
-    CreateAPIView,
-    UpdateAPIView,
     RetrieveUpdateDestroyAPIView,
 )
 from rest_framework.response import Response
 from rest_framework import status
+from apps.commons.models import Tag
+from apps.listings.tasks import send_new_listing_added_email_to_agent
 
 from apps.properties import models as prop_models
 from apps.agents import models as agent_models
@@ -152,18 +153,20 @@ class ListingListCreateView(ListCreateAPIView):
             # GET AGENT FROM AGENT BRANCH
             _agent = agent_branch_instance.agent
 
-            # CHECK AGENTS ACTIVE SERVICE SUBSCRIPTION
-            agent_active_subscription = (
-                agent_models.AgentServiceSubscription.objects.filter(
-                    agent=_agent.id, expire_on__gt=timezone.now()
-                ).first()
-            )
+            # # CHECK AGENTS ACTIVE SERVICE SUBSCRIPTION
+            # agent_active_subscription = (
+            #     agent_models.AgentServiceSubscription.objects.filter(
+            #         agent=_agent.id, expire_on__gt=timezone.now()
+            #     ).first()
+            # )
 
             is_listed_by_subscription = False
+            listing_payment_type = request.data.pop("listing_payment_type")
 
             # CHECK IF THE AGENT HAS ACTIVE SUBSCRIPTION
-            if agent_active_subscription:
+            if _agent.has_active_subscription:
                 is_listed_by_subscription = True
+                listing_payment_type = constants.LISTING_PAYMENT_TYPE_SUBSCRIPTION
 
             # GET LISTING EXPIRATION LIFE TIME FROM LISTING PARAMETERs
             listing_life_time = sys_models.ListingParameter.objects.get(
@@ -184,6 +187,7 @@ class ListingListCreateView(ListCreateAPIView):
                     agent_branch=agent_branch_instance,
                     main_property=property_instance,
                     expire_on=listing_expire_on,
+                    listing_payment_type=listing_payment_type,
                 )
             except Exception as e:
                 return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -257,6 +261,13 @@ class ListingListCreateView(ListCreateAPIView):
                 sub_listing_serializer.save(listing=listing_instance)
             except Exception as e:
                 return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+            send_new_listing_added_email_to_agent(
+                agent_branch=agent_branch_instance.id,
+                property_category_name=_property_category.name,
+                property_address=model_to_dict(property_instance.address),
+                listing_id=listing_instance.id,
+            )
 
             return Response(
                 {"data": listing_serializer.data}, status=status.HTTP_201_CREATED

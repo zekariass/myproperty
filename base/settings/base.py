@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     "apps.payments",
     "apps.listings",
     "apps.notifications",
+    "django_celery_results",
+    "django_celery_beat",
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -131,6 +133,12 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "apps.mixins.custom_pagination.GeneralCustomPagination",
 }
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        # 'LOCATION': '',
+    }
+}
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=10),
@@ -193,3 +201,14 @@ EMAIL_HOST_USER = "grinmove@gmail.com"
 EMAIL_HOST_PASSWORD = "gpwnkivstpjtfmfu"
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = "grinmove@gmail.com"
+
+
+CELERY_BROKER_URL = "amqps://grinmove:Eleisonzek2522@b-f69621cc-5fbf-49e2-b93d-8931693ea8d6.mq.eu-west-2.amazonaws.com:5671"
+# CELERY_BROKER_URL = "redis://default:toeu7Wig56V17PIa3LOxcT8indrL4XfJ@redis-17562.c226.eu-west-1-3.ec2.cloud.redislabs.com:17562"
+
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TIMEZONE = "Europe/London"
+CELERY_ENABLE_UTC = True

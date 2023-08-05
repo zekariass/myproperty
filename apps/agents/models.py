@@ -20,6 +20,7 @@ from apps.system import models as sys_models
 from apps.mixins.common_fields import (
     AddedOnFieldMixin,
     DescriptionAndAddedOnFieldMixin,
+    ExpireOnFieldMixin,
     StartAndExpireOnFieldMixin,
 )
 from apps.mixins.functions import (
@@ -84,7 +85,7 @@ class Agent(DescriptionAndAddedOnFieldMixin):
 
     @property
     def has_active_subscription(self):
-        return len(self.service_subscriptions.filter(expire_on__lt=timezone.now())) >= 1
+        return len(self.service_subscriptions.filter(expire_on__gt=timezone.now())) >= 1
 
 
 @receiver(post_save, sender=Agent)
@@ -451,7 +452,7 @@ class AgentReferralReward(AddedOnFieldMixin):
         return f"{self.coupon.code}"
 
 
-class AgentServiceSubscription(AddedOnFieldMixin, StartAndExpireOnFieldMixin):
+class AgentServiceSubscription(AddedOnFieldMixin, ExpireOnFieldMixin):
     """Subscriptions that the agent has subscribed to the system"""
 
     agent = models.ForeignKey(
@@ -460,10 +461,17 @@ class AgentServiceSubscription(AddedOnFieldMixin, StartAndExpireOnFieldMixin):
         related_name="service_subscriptions",
         related_query_name="service_subscription",
     )
-    subscription_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    subscription_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text="It is the actual payable price after discounts are deducted. The original price is the price at ServiceSubscriptionPlan",
+    )
     # subscription_currency = models.ForeignKey(
     #     sys_models.Currency, on_delete=models.SET_NULL, null=True
     # )
+    subscription_plan = models.ForeignKey(
+        sys_models.ServiceSubscriptionPlan, on_delete=models.SET_NULL, null=True
+    )
     payment = models.ForeignKey(
         "payments.Payment", on_delete=models.SET_NULL, null=True, blank=True
     )
@@ -473,7 +481,7 @@ class AgentServiceSubscription(AddedOnFieldMixin, StartAndExpireOnFieldMixin):
         return self.expire_on > timezone.now() and self.payment.is_approved
 
     def __str__(self):
-        return f"{self.agent.name}: {self.subscription_amount}"
+        return f"{self.agent.name}: {self.subscription_price}"
 
 
 class Requester(AddedOnFieldMixin):

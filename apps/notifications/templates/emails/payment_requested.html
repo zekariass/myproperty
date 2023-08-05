@@ -7,16 +7,13 @@
         </header>
 
         <p>
-            Your listing payment order <span style="font-weight: bolder; font-style: italic;">
-                {{po_number}}</span> 
-                has been approved.
+            Your <span style="font-weight:bold">{{payment_purpose}} </span> payment order has been received successfully. Your payment order reference number is {{po_number|safe}}.
         </p>
 
-        <p>Your listing is live now.</p>
-
-        <p>Check your listing <a href="{{link_to_listing}}">here</a></p>
+        <p>We will let you know once we approve your payment.</p>
 
         <p>Thank you for working with us!</p>
+
         <footer style="margin-top: 3%;">
             <p>Best</p>
             <p>Grinmove Team</p>

@@ -6,6 +6,11 @@ from django.utils import timezone
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 
+from apps.agents.tasks import (
+    send_new_agent_branch_added_email_to_agent,
+    send_welcome_email_to_new_agent,
+)
+
 from . import models as agent_models
 from apps.commons.models import Address
 from apps.commons.serializers import AddressSerializer
@@ -13,11 +18,12 @@ from apps.commons.serializers import AddressSerializer
 from apps.users.serializers import UserGroupSerializer
 from apps.system import models as sys_models
 
-from apps.mixins.functions import (generate_agent_branch_code,
-                                   generate_agent_referral_code,
-                                   send_new_agent_created_email)
-from apps.mixins.constants import (USER_GROUP_AGENT,
-                                   AGENT_REFERRAL_CODE_INITIAL)
+from apps.mixins.functions import (
+    generate_agent_branch_code,
+    generate_agent_referral_code,
+    send_new_agent_created_email,
+)
+from apps.mixins.constants import USER_GROUP_AGENT, AGENT_REFERRAL_CODE_INITIAL
 
 # ================= AGENT ===================================
 
@@ -29,14 +35,22 @@ class AgentMainBranchSerializer(ModelSerializer):
 
     class Meta:
         model = agent_models.AgentBranch
-        fields = ["id", 'branch_code', 'name', 'email',
-                  'phone_number', 'address', "is_main_branch"]
+        fields = [
+            "id",
+            "branch_code",
+            "name",
+            "email",
+            "phone_number",
+            "address",
+            "is_main_branch",
+        ]
         read_only_fields = ["id", "is_main_branch", "branch_code"]
 
     def create(self, validated_data):
         branch_code = generate_agent_branch_code()
-        branch_instance = agent_models.AgentBranch.objects.create(branch_code=branch_code,
-                                                                  **validated_data)
+        branch_instance = agent_models.AgentBranch.objects.create(
+            branch_code=branch_code, **validated_data
+        )
         return branch_instance
 
 
@@ -46,12 +60,19 @@ class AgentCreateSerializer(ModelSerializer):
 
     class Meta:
         model = agent_models.Agent
-        fields = ["id", "name", "motto", "logo_path", "referral_code",
-                  "user_group", "agent_branch", "referred_by"]
+        fields = [
+            "id",
+            "name",
+            "motto",
+            "logo_path",
+            "referral_code",
+            "user_group",
+            "agent_branch",
+            "referred_by",
+        ]
         read_only_fields = ["id", "referral_code", "referred_by"]
 
     def create(self, validated_data):
-
         # GENERATE AGENT REFERRAL CODE
         referral_code = generate_agent_referral_code()
 
@@ -74,15 +95,20 @@ class AgentCreateSerializer(ModelSerializer):
 
                 # GET REFERRE AGENT IF AGENT IS REFERRED BY ANOTHER AGENT
                 referrer_agent = None
-                if referrer_code and referrer_code.startswith(AGENT_REFERRAL_CODE_INITIAL):
+                if referrer_code and referrer_code.startswith(
+                    AGENT_REFERRAL_CODE_INITIAL
+                ):
                     referrer_agent = agent_models.Agent.objects.filter(
-                        referral_code=referrer_code).first()
+                        referral_code=referrer_code
+                    ).first()
 
                 # CREATE AGENT
-                agent = agent_models.Agent.objects.create(user_group=user_group,
-                                                          referral_code=referral_code,
-                                                          referred_by=referrer_agent if referrer_agent else None,
-                                                          **validated_data)
+                agent = agent_models.Agent.objects.create(
+                    user_group=user_group,
+                    referral_code=referral_code,
+                    referred_by=referrer_agent if referrer_agent else None,
+                    **validated_data,
+                )
 
                 # CREATE ADDRESS FOR THE BRANCH
                 address = Address.objects.create(**address)
@@ -90,19 +116,23 @@ class AgentCreateSerializer(ModelSerializer):
                 # CREATE MAIN BRANCH
                 # MAIN BRANCH IS CREATED DURING FIRST AGENT REGISTRATION AUTOMATICALLY
                 branch_code = generate_agent_branch_code()
-                branch = agent_models.AgentBranch.objects.create(agent=agent,
-                                                                 branch_code=branch_code,
-                                                                 is_main_branch=True,
-                                                                 address=address,
-                                                                 **agent_main_branch_data)
+                branch = agent_models.AgentBranch.objects.create(
+                    agent=agent,
+                    branch_code=branch_code,
+                    is_main_branch=True,
+                    address=address,
+                    **agent_main_branch_data,
+                )
 
                 # SET THE CURRENT USER WHO CREATE THE AGENT AS SUPER ADMIN OF THE AGENT
-                agent_models.AgentAdmin.objects.create(agent_branch=branch,
-                                                       user=user,
-                                                       is_superadmin=True)
+                agent_models.AgentAdmin.objects.create(
+                    agent_branch=branch, user=user, is_superadmin=True
+                )
 
-                # SEND EMAIL
-                send_new_agent_created_email("zemaedot3@gmail.com")
+                # SEND NEW AGENT ADDED EMAIL
+                send_welcome_email_to_new_agent.delay(
+                    agent_branch=branch.id,
+                )
 
                 # CHECK AGENT MODEL POST SAVE SIGNAL RECIEVER METHOD FOR REFERRAL CREATION
 
@@ -114,19 +144,35 @@ class AgentCreateSerializer(ModelSerializer):
 
 class AgentSerializer(ModelSerializer):
     agent_branch = AgentMainBranchSerializer(
-        source="branches", read_only=True, many=True)
+        source="branches", read_only=True, many=True
+    )
     user_group = UserGroupSerializer(read_only=True)
     detail = serializers.HyperlinkedIdentityField(
-        view_name="retrieve-update-destroy-agent",
-        lookup_field="pk"
+        view_name="retrieve-update-destroy-agent", lookup_field="pk"
     )
+    # has_active_subscription = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = agent_models.Agent
-        fields = ["id", "detail", "name", "motto", "logo_path",
-                  "referral_code", "user_group", "agent_branch", "referred_by"]
-        read_only_fields = ["id", "referral_code",
-                            "agent_branch", "referred_by"]
+        fields = [
+            "id",
+            "detail",
+            "name",
+            "motto",
+            "logo_path",
+            "referral_code",
+            "has_active_subscription",
+            "user_group",
+            "agent_branch",
+            "referred_by",
+        ]
+        read_only_fields = [
+            "id",
+            "referral_code",
+            "agent_branch",
+            "referred_by",
+            "has_active_subscription",
+        ]
 
 
 # ================= AGENT BRANCH =============================
@@ -135,16 +181,23 @@ class AgentBranchSerializer(ModelSerializer):
 
     class Meta:
         model = agent_models.AgentBranch
-        fields = ["id", "agent", 'name', 'email', 'phone_number',
-                  "is_main_branch", "branch_code", 'address']
+        fields = [
+            "id",
+            "agent",
+            "name",
+            "email",
+            "phone_number",
+            "is_main_branch",
+            "branch_code",
+            "address",
+        ]
         read_only_fields = ["id", "agent", "branch_code"]
 
     def create(self, validated_data):
         with transaction.atomic():
             try:
                 # GET AGENT ID FROM KWARGS WHICH IS SET IN THE URL
-                agent_id = self.context["request"].parser_context['kwargs'].get(
-                    'pk')
+                agent_id = self.context["request"].parser_context["kwargs"].get("pk")
 
                 # GET AGENT
                 agent = agent_models.Agent.objects.get(pk=agent_id)
@@ -158,9 +211,16 @@ class AgentBranchSerializer(ModelSerializer):
                 address = Address.objects.create(**address)
 
                 # CREATE AGENT BRANCH
-                agent_branch = agent_models.AgentBranch.objects.create(address=address,
-                                                                       agent=agent,
-                                                                       **validated_data, )
+                agent_branch = agent_models.AgentBranch.objects.create(
+                    address=address,
+                    agent=agent,
+                    **validated_data,
+                )
+
+                # SEND NEW AGENT ADDED EMAIL
+                send_new_agent_branch_added_email_to_agent.delay(
+                    agent_branch=agent_branch.id,
+                )
 
                 return agent_branch
             except Exception as e:
@@ -173,31 +233,35 @@ class AgentBranchSerializer(ModelSerializer):
                 # UPDATE BRANCH
                 instance.name = validated_data.get("name", instance.name)
                 instance.phone_number = validated_data.get(
-                    "phone_number", instance.name)
+                    "phone_number", instance.name
+                )
                 instance.email = validated_data.get("email", instance.name)
                 instance.is_main_branch = validated_data.get(
-                    "is_main_branch", instance.name)
+                    "is_main_branch", instance.name
+                )
 
                 # SAVE BRANCH
                 instance.save()
 
                 # UPDATE ADDRESS
-                instance.address.street = address.get(
-                    "street", instance.address.street)
+                instance.address.street = address.get("street", instance.address.street)
                 instance.address.post_code = address.get(
-                    "post_code", instance.address.post_code)
+                    "post_code", instance.address.post_code
+                )
                 instance.address.house_number = address.get(
-                    "house_number", instance.address.house_number)
-                instance.address.city = address.get(
-                    "city", instance.address.city)
-                instance.address.region = address.get(
-                    "region", instance.address.region)
+                    "house_number", instance.address.house_number
+                )
+                instance.address.city = address.get("city", instance.address.city)
+                instance.address.region = address.get("region", instance.address.region)
                 instance.address.latitude = address.get(
-                    "latitude", instance.address.latitude)
+                    "latitude", instance.address.latitude
+                )
                 instance.address.longitude = address.get(
-                    "longitude", instance.address.longitude)
+                    "longitude", instance.address.longitude
+                )
                 instance.address.country = address.get(
-                    "country", instance.address.country)
+                    "country", instance.address.country
+                )
 
                 # SAVE ADDRESS
                 instance.address.save()
@@ -205,16 +269,16 @@ class AgentBranchSerializer(ModelSerializer):
                 raise e
         return instance
 
+
 # ================= AGENT ADMIN =============================
 
 
 class AgentAdminSerializer(ModelSerializer):
     user_email = serializers.EmailField(write_only=True)
-    user = serializers.SlugRelatedField(slug_field="first_name",
-                                        read_only=True)
+    user = serializers.SlugRelatedField(slug_field="first_name", read_only=True)
     agent_branch = serializers.HyperlinkedRelatedField(
         view_name="retrieve-update-destroy-agentbranch",
-        queryset=agent_models.AgentAdmin.objects.all()
+        queryset=agent_models.AgentAdmin.objects.all(),
     )
 
     class Meta:
@@ -228,26 +292,27 @@ class AgentAdminSerializer(ModelSerializer):
         try:
             user = get_user_model().objects.get(email=user_email)
         except get_user_model().DoesNotExist:
-            return ObjectDoesNotExist({"result": f"No user registered with {user_email} found."})
+            return ObjectDoesNotExist(
+                {"result": f"No user registered with {user_email} found."}
+            )
 
         try:
-            branch_id = self.context["request"].parser_context['kwargs'].get(
-                'pk')
+            branch_id = self.context["request"].parser_context["kwargs"].get("pk")
             agent_branch = agent_models.AgentBranch.objects.get(pk=branch_id)
         except agent_models.AgentBranch.DoesNotExist:
             return ObjectDoesNotExist({"result": f"{agent_branch} not found."})
 
         else:
-            instance = agent_models.AgentAdmin.objects.create(user=user,
-                                                              agent_branch=agent_branch,
-                                                              **validated_data)
+            instance = agent_models.AgentAdmin.objects.create(
+                user=user, agent_branch=agent_branch, **validated_data
+            )
             return instance
 
 
 class AgentAdminRetrieveUpdateDestroySerializer(ModelSerializer):
     agent_branch = serializers.HyperlinkedRelatedField(
         view_name="retrieve-update-destroy-agentbranch",
-        queryset=agent_models.AgentAdmin.objects.all()
+        queryset=agent_models.AgentAdmin.objects.all(),
     )
 
     class Meta:

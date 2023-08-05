@@ -29,9 +29,28 @@ class System(DescriptionAndAddedOnFieldMixin):
         return f"{self.name}"
 
 
-"""
-There are different computations the system perform during processing a functionality, such as listing
-"""
+class Periodicity(AddedOnFieldMixin):
+    system = models.ForeignKey(
+        System,
+        verbose_name="system module",
+        on_delete=models.CASCADE,
+        help_text="The system module that the periodicity applies to",
+        related_name="periodicities",
+        related_query_name="periodicity",
+    )
+    name = models.CharField(
+        "periodicity name", max_length=30, unique=True, choices=constants.PERIODS
+    )
+    length = models.PositiveIntegerField("period length")
+    length_unit = models.CharField(
+        "period length unit", max_length=30, choices=constants.PERIOD_LENTH_UNITS
+    )
+
+    class Meta:
+        verbose_name_plural = "Periodicities"
+
+    def __str__(self) -> str:
+        return f"{self.id} {self.name}"
 
 
 class ListingParameter(DescriptionAndAddedOnFieldMixin):
@@ -239,7 +258,11 @@ class Discount(AddedOnFieldMixin, DescriptionAndAddedOnFieldMixin):
 
 
 class ServiceSubscriptionPlan(DescriptionAndAddedOnFieldMixin):
-    name = models.CharField("service subscription plan name", max_length=200)
+    name = models.CharField(
+        "service subscription plan name",
+        max_length=200,
+        choices=constants.SERVICE_SUBSCRIPTION_PLANS,
+    )
     system = models.ForeignKey(
         System,
         verbose_name="System Module",
@@ -248,54 +271,52 @@ class ServiceSubscriptionPlan(DescriptionAndAddedOnFieldMixin):
         related_name="service_subscription_plans",
         related_query_name="service_subscription_plan",
     )
-    listing_parameter = models.ForeignKey(
-        ListingParameter,
-        on_delete=models.CASCADE,
-        related_name="service_subscription_plans",
-        related_query_name="service_subscription_plan",
-        help_text="The discounts are linked to listing parameters so that \
-                                            the system can identify which discount to give to which agent",
+    # listing_parameter = models.ForeignKey(
+    #     ListingParameter,
+    #     on_delete=models.CASCADE,
+    #     related_name="service_subscription_plans",
+    #     related_query_name="service_subscription_plan",
+    #     help_text="The discounts are linked to listing parameters so that \
+    #                                         the system can identify which discount to give to which agent",
+    # )
+    subscription_price = models.DecimalField(
+        "subscription price", decimal_places=5, max_digits=12
     )
-    base_price = models.DecimalField(
-        "base subscription plan", decimal_places=5, max_digits=12
+    subscription_period = models.ForeignKey(
+        Periodicity, on_delete=models.CASCADE, related_name="subscription_period"
     )
-    period_unit = models.CharField(
-        "unit of period", max_length=20, choices=constants.PERIODS
+    subscription_period_length = models.PositiveIntegerField(
+        "length of subscription period", default=1
     )
-    period_length = models.PositiveIntegerField("length of period", default=1)
-    base_currency = models.ForeignKey(
-        Currency,
-        on_delete=models.CASCADE,
-        related_name="service_subscription_plans",
-        related_query_name="service_subscription_plan",
-        help_text="The default currency for this plan.",
-    )
-    billing_cycle = models.CharField(
-        "unit of billing period", max_length=20, choices=constants.PERIODS
+    # base_currency = models.ForeignKey(
+    #     Currency,
+    #     on_delete=models.CASCADE,
+    #     related_name="service_subscription_plans",
+    #     related_query_name="service_subscription_plan",
+    #     help_text="The default currency for this plan.",
+    # )
+    billing_cycle = models.ForeignKey(
+        Periodicity, on_delete=models.CASCADE, related_name="subscription_billing_cycle"
     )
     billing_cycle_length = models.PositiveIntegerField(
-        "length of billing period", default=1
+        "length of billing cycle period", default=1
     )
-    base_number_of_branchs = models.PositiveIntegerField(
+    base_number_of_branches = models.PositiveIntegerField(
         "Base number of branchs",
         default=1,
-        help_text="Maximum number of branchs with the base price. \
-                                                                    If more than this number, then addtional fees apply.",
+        help_text="Maximum number of branchs with the base price. If more than this number, then addtional fees apply.",
     )
-    price_increase_by_branch_percentage = models.DecimalField(
+    price_increase_by_branch_percentage_value = models.DecimalField(
         decimal_places=2,
         max_digits=12,
         default=0.00,
-        help_text="The percentage of the base price \
-                                                                that the subscription plan price is increased \
-                                                                  as the number of branches encrease",
+        help_text="The percentage of the base price that the subscription plan price is increased as the number of branches encrease",
     )
-    price_increase_by_branch_fixed = models.DecimalField(
+    price_increase_by_branch_fixed_value = models.DecimalField(
         decimal_places=2,
         max_digits=12,
         default=0.00,
-        help_text="The fixed rate that the subscription plan \
-                                                         price is increased as the number of branches encrease",
+        help_text="The fixed rate that the subscription plan price is increased as the number of branches encrease",
     )
 
     def __str__(self):

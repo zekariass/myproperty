@@ -1,0 +1,28 @@
+<html lang="en">
+</head>
+<body>
+    <body>
+        <header style="margin-bottom: 3%;">
+            <h4>Dear Partner,</h4>
+        </header>
+
+        <p>
+            Thank you for your subscription. Your subscription has been activated successfully.
+        </p>
+
+        {% if subscription_period_length > 1%}
+            <p>You subscribed for <span style="font-weight:bold"> {{subscription_period_length}} {{subscription_period|title}}ly </span>, billed every <span style="font-weight:bold">{{billing_cycle_length}} {{billing_cycle|lower}}</span></p>
+         {% else%}
+            <p>You subscribed for <span style="font-weight:bold">{{subscription_period|title}}ly </span>, billed every <span style="font-weight:bold">{{billing_cycle_length}} {{billing_cycle|lower}}</span></p>
+        {% endif %}
+
+        <p>We will send you notification before your subscription expires.</a></p>
+
+        <p>Thank you, again, for working with us!</p>
+        <footer style="margin-top: 3%;">
+            <p>Best</p>
+            <p>Grinmove Team</p>
+        </footer>
+        </body>
+</body>
+</html>

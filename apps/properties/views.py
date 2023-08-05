@@ -12,6 +12,8 @@ from rest_framework.generics import (
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
+from apps.properties import tasks
+
 from . import models as prop_models
 from . import serializers as prop_serializers
 
@@ -492,8 +494,13 @@ class PropertyCreateView(ListCreateAPIView):
                             for unit_ordered_dict in unit_serializer.data
                         ]
 
+                    tasks.send_new_property_added_email_to_agent(
+                        custom_property_id=property_instance.custom_prop_id,
+                        agent_branch=property_instance.agent_branch.id,
+                    )
                     # SEND RESPONSE IF PROPERTY IS MULTI-UNIT PROPERTY
-                    # INCASE OF SHAREHOUSE UNITS = ROOMS
+                    # INCASE OF SHAREHOUSE, UNITS = ROOMS
+
                     return Response(
                         {
                             "detail": "Property created.",
@@ -509,6 +516,11 @@ class PropertyCreateView(ListCreateAPIView):
                         status=status.HTTP_201_CREATED,
                     )
 
+            tasks.send_new_property_added_email_to_agent.delay(
+                custom_property_id=property_instance.custom_prop_id,
+                # agent=property_instance.agent,
+                agent_branch=property_instance.agent_branch.id,
+            )
             # SEND RESPONSE IF PROPERTY IS NON MULTI-UNIT PROPERTY
             return Response(
                 {
