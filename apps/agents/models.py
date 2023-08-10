@@ -33,8 +33,8 @@ from apps.mixins.functions import (
 from apps.mixins.constants import (
     AGENT_REQUEST_TYPES,
     AGENT_REQUEST_SENDER,
-    MYPROPERY_SYSTEM_MODULE_NAME,
-    AGENT_REFERRAL_COUPON,
+    SYSTEM_MODULE_NAME_MYPROPERY,
+    LISTING_PARAM_AGENT_REFERRAL_COUPON,
 )
 
 
@@ -98,7 +98,8 @@ def agent_post_save(sender, instance, created, **kwargs):
         referee_coupon = None
         with transaction.atomic():
             available_reward_plan = sys_models.ReferralRewardPlan.objects.filter(
-                expire_on__gt=timezone.now(), system__name=MYPROPERY_SYSTEM_MODULE_NAME
+                expire_on__gt=timezone.now(),
+                system__name=SYSTEM_MODULE_NAME_MYPROPERY,
             ).first()
             if available_reward_plan:
                 # CREATE OR UPDATE AGENT REFERRAL TRACKER
@@ -132,7 +133,7 @@ def agent_post_save(sender, instance, created, **kwargs):
                 # GET THE SYSTEM MODULE
                 system = (
                     sys_models.System.objects.filter(
-                        name=MYPROPERY_SYSTEM_MODULE_NAME
+                        name=SYSTEM_MODULE_NAME_MYPROPERY
                     ).first()
                     or None
                 )
@@ -156,7 +157,7 @@ def agent_post_save(sender, instance, created, **kwargs):
                 # GET AGENT REFERRAL COUPON LISTING PARAMETER
                 listing_param_for_agent_referral_coupon = (
                     sys_models.ListingParameter.objects.filter(
-                        name=AGENT_REFERRAL_COUPON
+                        name=LISTING_PARAM_AGENT_REFERRAL_COUPON
                     ).first()
                 )
 
@@ -354,6 +355,9 @@ class AgentDiscountTracker(AddedOnFieldMixin, StartAndExpireOnFieldMixin):
     max_discounts = models.PositiveIntegerField(
         "how many total discounts you have?", default=0
     )
+
+    def __str__(self) -> str:
+        return f"Agent: {self.agent.name}, Discount: {self.discount.name}, max: {self.max_discounts}, used: {self.used_discounts}"
 
 
 class AgentReferralTracker(AddedOnFieldMixin):

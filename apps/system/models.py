@@ -216,22 +216,24 @@ class PaymentMethodDiscount(
         return f"{self.payment_method}: {self.discount_percentage_value}% | {self.discount_percentage_value}"
 
 
-class Discount(AddedOnFieldMixin, DescriptionAndAddedOnFieldMixin):
-    name = models.CharField("discount name", max_length=200, unique=True)
-    listing_parameter = models.ForeignKey(
-        ListingParameter,
-        on_delete=models.CASCADE,
-        related_name="discounts",
-        related_query_name="discount",
-        help_text="The discounts are linked to listing parameters so that \
-                                            the system can identify which discount to give to which agent",
+class Discount(StartAndExpireOnFieldMixin, DescriptionAndAddedOnFieldMixin):
+    name = models.CharField(
+        "discount name", max_length=200, choices=constants.DISCOUNT_NAMES
     )
+    # listing_parameter = models.ForeignKey(
+    #     ListingParameter,
+    #     on_delete=models.CASCADE,
+    #     related_name="discounts",
+    #     related_query_name="discount",
+    #     help_text="The discounts are linked to listing parameters so that \
+    #                                         the system can identify which discount to give to which agent",
+    # )
     action = models.CharField(
         verbose_name="Discount Action Type",
         max_length=50,
         choices=constants.DISCOUNT_ACTIONS,
         help_text="determines how the system calculated length of discount period \
-                                or amount. It can have count, single, or deadline.",
+                    or amount. It can have count, single, or deadline.",
     )
     unit = models.CharField(
         "discount value unit",
@@ -242,19 +244,73 @@ class Discount(AddedOnFieldMixin, DescriptionAndAddedOnFieldMixin):
     value = models.IntegerField(
         default=1, help_text="Unit value. i.e. 5 days, or 10 listings, etc", blank=True
     )
-    deadline = models.DateTimeField(null=True, blank=True)
+    # deadline = models.DateTimeField(null=True, blank=True)
     discount_percentage_value = models.DecimalField(
         decimal_places=2, max_digits=10, default=0.00
     )
     discount_fixed_value = models.DecimalField(
         decimal_places=2, max_digits=10, default=0.00
     )
-    discount_type = models.CharField(choices=constants.DISCOUNT_TYPES, max_length=50)
+    payment_type = models.CharField(
+        choices=constants.LISTING_PAYMENT_TYPES, max_length=50
+    )
     is_active = models.BooleanField(default=True)
     is_trackable = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.name}"
+        return f"{self.name} ==>{self.payment_type}"
+
+    def save(self, *args, **kwargs):
+        if (
+            self.payment_type == constants.LISTING_PAYMENT_TYPE_SUBSCRIPTION
+            and self.action == constants.DISCOUNT_ACTION_COUNT
+        ):
+            raise ValidationError(
+                {"error": "Subscription discount cannot have count action type!"}
+            )
+        if (
+            self.payment_type == constants.LISTING_PAYMENT_TYPE_SUBSCRIPTION
+            and self.is_trackable
+        ):
+            raise ValidationError(
+                {"error": "Subscription discount discount cannot be trackable!"}
+            )
+
+        if self.action == constants.DISCOUNT_ACTION_DEADLINE and self.is_trackable:
+            raise ValidationError(
+                {"error": "Discount with deadline action type cannot be trackable!"}
+            )
+
+        if (
+            self.action == constants.DISCOUNT_ACTION_DEADLINE
+            and self.unit != constants.DISCOUNT_UNIT_NONE
+        ):
+            raise ValidationError(
+                {"error": "Discount with deadline can only have None unit!"}
+            )
+
+        if (
+            self.payment_type == constants.LISTING_PAYMENT_TYPE_PAY_PER_LISTING
+            and self.unit == constants.DISCOUNT_ACTION_SINGLE
+        ):
+            raise ValidationError(
+                {
+                    "error": "Pay-per-listing type discount cannot have single action type and None unit!"
+                }
+            )
+
+        active_discount_exist_with_same_name = Discount.objects.filter(
+            name=self.name, payment_type=self.payment_type, expire_on__gt=timezone.now()
+        ).exclude(id=self.id)
+
+        if active_discount_exist_with_same_name.exists():
+            raise ValidationError(
+                {
+                    "error": "Unexpired discount with same name and payment type already exists!"
+                }
+            )
+
+        super().save(*args, **kwargs)
 
 
 class ServiceSubscriptionPlan(DescriptionAndAddedOnFieldMixin):

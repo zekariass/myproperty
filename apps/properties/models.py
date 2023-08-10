@@ -758,7 +758,7 @@ class PropertyKeyFeature(DescriptionAndAddedOnFieldMixin):
 
 
 class ListingPriceByPropertyCategory(
-    DescriptionAndAddedOnFieldMixin, ExpireOnFieldMixin
+    DescriptionAndAddedOnFieldMixin,  # ExpireOnFieldMixin
 ):
     """Every category may have a different listing price set by administrators"""
 
@@ -792,46 +792,48 @@ class ListingPriceByPropertyCategory(
         max_digits=10,
         default=0.00000,
     )
-    currency = models.ForeignKey(
-        sys_models.Currency, on_delete=models.SET_NULL, blank=True, null=True
-    )
+    # currency = models.ForeignKey(
+    #     sys_models.Currency, on_delete=models.SET_NULL, blank=True, null=True
+    # )
 
-    # class Meta:
-    #     constraints = [
-    #         models.UniqueConstraint(fields=["property_category", "listing_type"],
-    #                                 name="single_listing_price_by_property_category_constraint")
-    #     ]
-
-    @property
-    def is_expired(self):
-        expired = self.expire_on >= timezone.now
-        return expired
-
-    def save(self, *args, **kwargs):
-        # Check if this instance is unexpired and there is unexpired instance already
-        unexpired_listing_price_exist = (
-            self.expire_on >= timezone.now()
-        ) and ListingPriceByPropertyCategory.objects.filter(
-            expire_on__gte=timezone.now(),
-            property_category=self.property_category,
-            listing_type=self.listing_type,
-        ).exclude(
-            id=self.id
-        ).exists()
-
-        if unexpired_listing_price_exist:
-            raise IntegrityError(
-                f"Active listing price for listing type: {self.listing_type} and property category: {self.property_category.name} exists"
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["property_category", "listing_type"],
+                name="single_listing_price_by_property_category_constraint",
             )
+        ]
 
-        super().save(*args, **kwargs)
+    # @property
+    # def is_expired(self):
+    #     expired = self.expire_on >= timezone.now
+    #     return expired
+
+    # def save(self, *args, **kwargs):
+    #     # Check if this instance is unexpired and there is unexpired instance already
+    #     unexpired_listing_price_exist = (
+    #         self.expire_on >= timezone.now()
+    #     ) and ListingPriceByPropertyCategory.objects.filter(
+    #         expire_on__gte=timezone.now(),
+    #         property_category=self.property_category,
+    #         listing_type=self.listing_type,
+    #     ).exclude(
+    #         id=self.id
+    #     ).exists()
+
+    #     if unexpired_listing_price_exist:
+    #         raise IntegrityError(
+    #             f"Active listing price for listing type: {self.listing_type} and property category: {self.property_category.name} exists"
+    #         )
+
+    #     super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Listing Price: {self.property_category.name}, {self.listing_type}"
 
 
 class ListingPriceByPropertyCategoryHistory(
-    DescriptionAndAddedOnFieldMixin, ExpireOnFieldMixin
+    DescriptionAndAddedOnFieldMixin,  # ExpireOnFieldMixin
 ):
     """Every category may have a different listing price set by administrators"""
 
@@ -861,18 +863,18 @@ class ListingPriceByPropertyCategoryHistory(
         sys_models.Currency, on_delete=models.SET_NULL, blank=True, null=True
     )
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["property_category", "listing_type"],
-                name="single_listing_price_by_property_category_history_constraint",
-            )
-        ]
+    # class Meta:
+    #     constraints = [
+    #         models.UniqueConstraint(
+    #             fields=["property_category", "listing_type"],
+    #             name="single_listing_price_by_property_category_history_constraint",
+    #         )
+    #     ]
 
-    @property
-    def is_expired(self):
-        expired = self.expire_on >= timezone.now
-        return expired
+    # @property
+    # def is_expired(self):
+    #     expired = self.expire_on >= timezone.now
+    #     return expired
 
     def __str__(self):
         return f"Listing Price: {self.property_category.name}, {self.listing_type}"

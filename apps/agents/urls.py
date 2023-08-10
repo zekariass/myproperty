@@ -37,4 +37,16 @@ urlpatterns = [
         views.ServiceSubscriptionListCreateView.as_view(),
         name="list-create-agent-service-subscription",
     ),
+    # GET AGENT PAY_PER_LISTING DISCOUNTS
+    path(
+        "<int:pk>/ppl-discounts/",
+        views.GetPayPerListingDiscountView.as_view(),
+        name="get-agent-pay-per-listing-discount",
+    ),
+    # GET AGENT SUBSCRIPTION DISCOUNTS
+    path(
+        "<int:pk>/subscription-discounts/",
+        views.GetSubscriptionDiscountView.as_view(),
+        name="get-agent-subscription-discount",
+    ),
 ]

@@ -10,6 +10,7 @@ from apps.agents.tasks import (
     send_new_agent_branch_added_email_to_agent,
     send_welcome_email_to_new_agent,
 )
+from apps.system.serializers import PaymentMethodDiscountSerializer
 
 from . import models as agent_models
 from apps.commons.models import Address
@@ -375,3 +376,15 @@ class RequestMessageSerializer(ModelSerializer):
     class Meta:
         model = agent_models.RequestMessage
         fields = "__all__"
+
+
+# ================= AGENT CALCULATED DISCOUNT ==================================
+class AgentCalculatedDiscountSerializer(serializers.Serializer):
+    listing_discount = serializers.SerializerMethodField(read_only=True)
+    payment_method_discounts = PaymentMethodDiscountSerializer(read_only=True)
+
+    class Meta:
+        fields = ["listing_discount", "payment_method_discounts"]
+
+    def get_listing_discount(self, obj):
+        return "1233"

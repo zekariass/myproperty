@@ -22,7 +22,6 @@ urlpatterns = [
         auth_views.UserRetrieveUpdateDestroyView.as_view(),
         name="retrieve-update-destroy-user",
     ),
-    # path("<int:pk>/update", auth_views.UserRetrieveUpdateDestroyView.as_view(), name = "retrieve-update-destroy-user"),
     # User Groups
     path(
         "groups/", auth_views.GroupListCreateView.as_view(), name="list-create-groups"

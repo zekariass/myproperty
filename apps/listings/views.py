@@ -11,6 +11,7 @@ from rest_framework.generics import (
 )
 from rest_framework.response import Response
 from rest_framework import status
+from apps.agents.views import update_agent_discount_tracker
 from apps.commons.models import Tag
 from apps.listings.tasks import send_new_listing_added_email_to_agent
 
@@ -170,7 +171,7 @@ class ListingListCreateView(ListCreateAPIView):
 
             # GET LISTING EXPIRATION LIFE TIME FROM LISTING PARAMETERs
             listing_life_time = sys_models.ListingParameter.objects.get(
-                name=constants.LISTING_LIFE_TIME
+                name=constants.LISTING_PARAM_LISTING_LIFE_TIME
             )
 
             listing_expire_on = timezone.now() + timedelta(
@@ -261,6 +262,8 @@ class ListingListCreateView(ListCreateAPIView):
                 sub_listing_serializer.save(listing=listing_instance)
             except Exception as e:
                 return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+            update_agent_discount_tracker(agent_branch_instance.agent.id)
 
             send_new_listing_added_email_to_agent(
                 agent_branch=agent_branch_instance.id,

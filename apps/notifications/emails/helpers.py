@@ -17,7 +17,6 @@ def get_agent_notification_preferences(agent):
     """
     A helper function to list the notification preferences of the agent from DB
     """
-
     agent_notification_preferences = (
         notif_models.AgentNotificationPreference.objects.values_list(
             "notification_topic__name", flat=True
@@ -54,15 +53,6 @@ def get_payment_order_confirmation_email_content(payment_purpose, context_data={
     content_path = None
 
     # TOPIC OF THE EMAIL NOTIFICATION TO BE READ FROM CONSTANTS MODULE
-    # topic = None
-    # if payment_purpose == constants.PAYMENT_PURPOSE_FEATURING:
-    #     content_path = "emails/featuring_payment_requested.html"
-    # elif payment_purpose == constants.PAYMENT_PURPOSE_LISTING:
-    #     content_path = "emails/listing_payment_requested.html"
-    # elif payment_purpose == constants.PAYMENT_PURPOSE_SUBSCRIPTION:
-    #     content_path = "emails/new_service_subscription.html"
-    # else:
-    #     email_content = ""
     content_path = "emails/payment_requested.html"
     context_data = {**context_data, "payment_purpose": payment_purpose, **context_data}
     topic = get_notification_topic(constants.NOTIFICATION_TOPIC_PAYMENT_ORDER_REQUESTED)
@@ -84,15 +74,6 @@ def get_payment_approval_confirmation_email_content(payment_purpose, context_dat
 
     # TOPIC OF THE EMAIL NOTIFICATION TO BE READ FROM CONSTANTS MODULE
     topic = None
-    # if payment_purpose == constants.PAYMENT_PURPOSE_FEATURING:
-    #     content_path = "emails/featuring_payment_approved.html"
-
-    # elif payment_purpose == constants.PAYMENT_PURPOSE_LISTING:
-    #     content_path = "emails/listing_payment_approved.html"
-    # elif payment_purpose == constants.PAYMENT_PURPOSE_SUBSCRIPTION:
-    #     content_path = "emails/new_service_subscription.html"
-    # else:
-    #     email_content = ""
 
     content_path = "emails/payment_approved.html"
     context_data = {**context_data, "payment_purpose": payment_purpose, **context_data}

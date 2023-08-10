@@ -16,20 +16,26 @@ def send_new_listing_added_email_to_agent(*args, **kwargs):
         kwargs["agent_branch"]
     )
 
+    # EMAIL SUBJECT
     subject = f"New listing added"
 
+    # CONTEXT DATA TO BE SENT THE TEMPLATE
     context_data = {
         "property_category_name": kwargs["property_category_name"],
         "property_address": kwargs["property_address"],
         "listing_id": kwargs["listing_id"],
     }
 
+    # GET EMAIL CONTENT, CONTENT PATH AND THE TOPIC OF THE NOTIFICATION
+    # THE NOTIFICATION WILL BE SAVED TO DB BUT THE PATH OF THE TEMPLATE WILL
+    # BE SAVED INSTEAD OF THE CONTENT ITSELF
     (
         email_content,
         content_path,
         topic,
     ) = get_new_listing_added_notification_content(context_data)
 
+    # SEND THE EMAIL
     send_mail(
         subject,
         "",
@@ -39,6 +45,7 @@ def send_new_listing_added_email_to_agent(*args, **kwargs):
         fail_silently=True,
     )
 
+    # CREATE THE NOTIFICATION AND SAVE TO DB
     create_notification(
         title=subject,
         content=content_path,

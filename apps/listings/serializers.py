@@ -72,6 +72,9 @@ class ListingSerializer(ModelSerializer):
         ]
 
     def get_listing_type_data(self, obj):
+        """
+        Get Rend or Sale related data
+        """
         if obj.listing_type == constants.LISTING_TYPE_RENT:
             rent_listing = listing_models.RentListing.objects.get(listing=obj.id)
             return RentListingSerializer(instance=rent_listing).data

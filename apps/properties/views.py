@@ -75,11 +75,9 @@ class ListingPriceByPropertyCategoryListCreateView(ListCreateAPIView):
         if serializer.is_valid():
             try:
                 self.perform_create(serializer)
-            except IntegrityError:
+            except Exception as e:
                 return Response(
-                    {
-                        "detail": "Active listing price for this listing type and property category exists"
-                    },
+                    {"detail": str(e)},
                     status=status.HTTP_409_CONFLICT,
                 )
 
@@ -101,11 +99,9 @@ class ListingPriceByPropertyCategoryRetrieveUpdateDestroyView(
         if serializer.is_valid():
             try:
                 self.perform_update(serializer)
-            except IntegrityError:
+            except Exception as e:
                 return Response(
-                    {
-                        "detail": "Active listing price for this listing type and property category exists"
-                    },
+                    {"detail": str(e)},
                     status=status.HTTP_409_CONFLICT,
                 )
 

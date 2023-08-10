@@ -32,6 +32,9 @@ class IsAgentOrReadOnly(permissions.BasePermission):
 
 class IsAgent(permissions.BasePermission):
     def has_permission(self, request, view):
+        user = request.user
+        if not user.is_authenticated:
+            return False
         agent_admin = AgentAdmin.objects.select_related("agent_branch").get(
             user=request.user
         )

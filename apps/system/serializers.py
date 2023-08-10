@@ -1,5 +1,7 @@
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
+
+from apps.mixins import constants
 from . import models as sys_models
 
 
@@ -55,23 +57,73 @@ class DiscountSerializer(ModelSerializer):
     # If is_trackable is True, then add a record to every agent in AgentDiscount table
     #     pass
 
-    def validate(self, data):
-        action = data.get("action")
-        unit = data.get("unit")
-        discount_type = data.get("discount_type")
+    # def validate(self, data):
+    #     action = data.get("action")
+    #     unit = data.get("unit")
+    #     payment_type = data.get("payment_type")
+    #     is_trackable = data.get("is_trackable")
 
-        if (
-            (action == "COUNT" and unit == "SUBSCRIPTION")
-            or (action == "SINGLE" and unit in ["DAYS", "LISTINGS"])
-            or (unit == "SUBSCRIPTION" and discount_type == "PAY_PER_LISTING")
-            or (unit in ["DAYS", "LISTINGS"] and discount_type == "SUBSCRIPTION")
-            or (action == "COUNT" and discount_type == "SUBSCRIPTION")
-        ):
-            raise serializers.ValidationError(
-                {"error": "Action, unit and discount type incompatibility!"}
-            )
+    # if (
+    #     action == constants.DISCOUNT_ACTION_COUNT
+    #     and payment_type == constants.LISTING_PAYMENT_TYPE_SUBSCRIPTION
+    # ):
+    #     raise serializers.ValidationError(
+    #         {"error": "Subscription discount cannot have count action type!"}
+    #     )
+    # if payment_type == constants.LISTING_PAYMENT_TYPE_SUBSCRIPTION and is_trackable:
+    #     raise serializers.ValidationError(
+    #         {"error": "Subscription discount discount cannot be trackable!"}
+    #     )
 
-        return data
+    # if action == constants.DISCOUNT_ACTION_DEADLINE and is_trackable:
+    #     raise serializers.ValidationError(
+    #         {"error": "Discount with deadline action type cannot be trackable!"}
+    #     )
+
+    # if (
+    #     action == constants.DISCOUNT_ACTION_DEADLINE
+    #     and unit != constants.DISCOUNT_UNIT_NONE
+    # ):
+    #     raise serializers.ValidationError(
+    #         {"error": "Discount with deadline can only have None unit!"}
+    #     )
+
+    # if (
+    #     payment_type == constants.LISTING_PAYMENT_TYPE_SUBSCRIPTION
+    #     and unit == constants.DISCOUNT_ACTION_SINGLE
+    #     and is_trackable
+    # ):
+    #     raise serializers.ValidationError(
+    #         {
+    #             "error": "Subscription discount with single action type cannot be trackable!"
+    #         }
+    #     )
+
+    # if (
+    #     payment_type == constants.LISTING_PAYMENT_TYPE_PAY_PER_LISTING
+    #     and unit == constants.DISCOUNT_ACTION_SINGLE
+    #     or payment_type == constants.LISTING_PAYMENT_TYPE_PAY_PER_LISTING
+    #     and unit == constants.DISCOUNT_UNIT_NONE
+    # ):
+    #     raise serializers.ValidationError(
+    #         {
+    #             "error": "Pay-per-listing type discount cannot have single action type and None unit!"
+    #         }
+    #     )
+
+    # if (
+    #     payment_type == constants.LISTING_PAYMENT_TYPE_SUBSCRIPTION
+    #     and action == constants.DISCOUNT_ACTION_COUNT
+    #     or payment_type == constants.LISTING_PAYMENT_TYPE_SUBSCRIPTION
+    #     and unit == constants.DISCOUNT_UNIT_NONE
+    # ):
+    #     raise serializers.ValidationError(
+    #         {
+    #             "error": "Subscription type discount cannot have count action type and None unit"
+    #         }
+    #     )
+
+    # return data
 
 
 # ================ SERVICE SUBSCRIPTION PLAN ===============
