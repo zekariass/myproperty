@@ -362,20 +362,54 @@ class RequesterSerializer(ModelSerializer):
     class Meta:
         model = agent_models.Requester
         fields = "__all__"
+        read_only_fields = ["user"]
 
 
 # ================= REQUEST =========================================
+
+
+class InlineRequestMessageSerializer(ModelSerializer):
+    class Meta:
+        model = agent_models.RequestMessage
+        fields = "__all__"
+
+
 class RequestSerializer(ModelSerializer):
+    requester = RequesterSerializer(read_only=True)
+    messages = InlineRequestMessageSerializer(read_only=True, many=True)
+
     class Meta:
         model = agent_models.Request
-        fields = "__all__"
+        fields = [
+            "id",
+            "requester",
+            "agent_branch",
+            "listing",
+            "request_type",
+            "added_on",
+            "messages",
+        ]
+        read_only_fields = ["id", "requester", "added_on"]
+
+    # def get_messages(self, obj):
+    #     return InlineRequestMessageSerializer(
+    #         instance=obj.requestmessage_set.all()
+    #     ).data
+
+    # def to_representation(self, instance):
+    #     representation = super().to_representation(instance)
+    #     representation["messages"] = instance.requestmessage_set.all()
+    #     return representation
 
 
 # ================= REQUEST MESSAGE ==================================
 class RequestMessageSerializer(ModelSerializer):
+    request = RequestSerializer(read_only=True)
+
     class Meta:
         model = agent_models.RequestMessage
         fields = "__all__"
+        read_only_fields = ["request"]
 
 
 # ================= AGENT CALCULATED DISCOUNT ==================================

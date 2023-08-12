@@ -257,7 +257,14 @@ class CommercialPropertySerializer(ModelSerializer):
 
     class Meta:
         model = prop_models.CommercialProperty
-        fields = ["id", "floors", "status", "is_multi_unit", "units", "added_on"]
+        fields = [
+            "id",
+            "floors",
+            "status",
+            "is_multi_unit",
+            "units",
+            "added_on",
+        ]
         read_only_fields = ["id", "is_multi_unit", "added_on"]
 
     def get_is_multi_unit(self, instance):

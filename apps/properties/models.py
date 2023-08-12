@@ -489,11 +489,11 @@ class CommercialProperty(
         verbose_name="main property",
         related_name="commercial_property",
     )
-    unit_type = models.CharField(
-        "commercial property unit type",
-        max_length=20,
-        choices=constants.COMMERCIAL_PROPERTY_UNIT_TYPES,
-    )
+    # unit_type = models.CharField(
+    #     "commercial property unit type",
+    #     max_length=20,
+    #     choices=constants.COMMERCIAL_PROPERTY_UNIT_TYPES,
+    # )
     has_parking_space = models.BooleanField(
         verbose_name="is the commercial property new?", default=False
     )
@@ -767,7 +767,7 @@ class ListingPriceByPropertyCategory(
         related_name="listing_price_by_property_category",
         on_delete=models.CASCADE,
     )
-    listing_type = models.CharField(max_length=20, choices=constants.LISTING_TYPE)
+    listing_type = models.CharField(max_length=20, choices=constants.LISTING_TYPES)
     price_percentage = models.DecimalField(
         help_text="Percentage value of the property price that the agent should pay for listing",
         decimal_places=5,
@@ -816,14 +816,14 @@ class ListingPriceByPropertyCategory(
     #     ) and ListingPriceByPropertyCategory.objects.filter(
     #         expire_on__gte=timezone.now(),
     #         property_category=self.property_category,
-    #         listing_type=self.listing_type,
+    #         S=self.S,
     #     ).exclude(
     #         id=self.id
     #     ).exists()
 
     #     if unexpired_listing_price_exist:
     #         raise IntegrityError(
-    #             f"Active listing price for listing type: {self.listing_type} and property category: {self.property_category.name} exists"
+    #             f"Active listing price for listing type: {self.S} and property category: {self.property_category.name} exists"
     #         )
 
     #     super().save(*args, **kwargs)
@@ -866,7 +866,7 @@ class ListingPriceByPropertyCategoryHistory(
     # class Meta:
     #     constraints = [
     #         models.UniqueConstraint(
-    #             fields=["property_category", "listing_type"],
+    #             fields=["property_category", "S"],
     #             name="single_listing_price_by_property_category_history_constraint",
     #         )
     #     ]

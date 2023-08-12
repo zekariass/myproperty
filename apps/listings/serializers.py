@@ -5,6 +5,7 @@ from django.utils import timezone
 from apps.commons.models import Tag
 
 from apps.mixins import constants
+from apps.properties.serializers import PropertyAnySerializer
 
 from . import models as listing_models
 
@@ -30,6 +31,10 @@ class ListingSerializer(ModelSerializer):
     is_featuring_approved = serializers.SerializerMethodField(read_only=True)
     agent = serializers.SerializerMethodField(read_only=True)
     tags = serializers.SerializerMethodField(read_only=True)
+    unit_type = serializers.SerializerMethodField(read_only=True)
+    property_category = serializers.CharField(
+        read_only=True, source="main_property.property_category.cat_key"
+    )
 
     class Meta:
         model = listing_models.Listing
@@ -49,10 +54,12 @@ class ListingSerializer(ModelSerializer):
             "featured_on",
             "is_featuring_approved",
             "listing_type_data",
+            "unit_type",
             "tags",
             "agent_branch",
             "agent",
             "main_property",
+            "property_category",
             "expire_on",
             "added_on",
         ]
@@ -93,6 +100,16 @@ class ListingSerializer(ModelSerializer):
 
     def get_agent(self, obj):
         return obj.agent
+
+    def get_unit_type(self, obj):
+        if hasattr(obj, "officelisting"):
+            return constants.LISTING_PROPERTY_UNIT_TYPE_OFFICE_UNIT
+        elif hasattr(obj, "othercommercialpropertyunitlisting"):
+            return constants.LISTING_PROPERTY_UNIT_TYPE_OTHER_COMMERCIAL_PROPERTY_UNIT
+        elif hasattr(obj, "apartmentunitlisting"):
+            return constants.LISTING_PROPERTY_UNIT_TYPE_APARTMENT_UNIT
+        else:
+            return ""
 
     def get_tags(self, obj):
         # GET TAGS THAT CAN BE APPLIED TO LISTING

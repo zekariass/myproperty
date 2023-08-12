@@ -49,4 +49,22 @@ urlpatterns = [
         views.GetSubscriptionDiscountView.as_view(),
         name="get-agent-subscription-discount",
     ),
+    # CREATE LIST REQUEST
+    path(
+        "client-requests/",
+        views.RequestListCreateView.as_view(),
+        name="create-client-request",
+    ),
+    # RETRIEVE REQUEST
+    path(
+        "requests/<int:pk>/",
+        views.RequestRetrieveView.as_view(),
+        name="retrieve-request",
+    ),
+    # GET AGENT REQUESTS
+    path(
+        "requests/",  # ?agent=1
+        views.RetrieveequestByAgentRView.as_view(),
+        name="list-request-by-agent",
+    ),
 ]

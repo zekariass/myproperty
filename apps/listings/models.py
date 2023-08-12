@@ -17,7 +17,7 @@ from apps.system import models as sys_models
 
 
 class Listing(DescriptionAndAddedOnFieldMixin, ExpireOnFieldMixin):
-    listing_type = models.CharField(max_length=30, choices=constants.LISTING_TYPE)
+    listing_type = models.CharField(max_length=30, choices=constants.LISTING_TYPES)
     listing_payment_type = models.CharField(
         max_length=30, choices=constants.LISTING_PAYMENT_TYPES
     )
@@ -96,7 +96,7 @@ class Listing(DescriptionAndAddedOnFieldMixin, ExpireOnFieldMixin):
 
 
 class CommonListingMixin(AddedOnFieldMixin):
-    listing = models.ForeignKey(Listing, on_delete=models.CASCADE)
+    listing = models.OneToOneField(Listing, on_delete=models.CASCADE)
 
     class Meta:
         abstract = True
@@ -228,5 +228,6 @@ class OtherCommercialPropertyUnitListing(CommonListingMixin):
         return super().save(*args, **kwargs)
 
 
-class SavedListing(CommonListingMixin):
+class SavedListing(AddedOnFieldMixin):
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

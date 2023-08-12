@@ -1,5 +1,5 @@
 from rest_framework.response import Response
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, connection, transaction
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render
 from rest_framework.generics import (
@@ -537,6 +537,11 @@ class PropertyListView(ListAPIView):
     permission_classes = [IsAdminUserOrReadOnly]
     pagination_class = GeneralCustomPagination
 
+    # def get_queryset(self):
+    #     query = super().get_queryset()
+    #     print("======================>: ", len(connection.queries))
+    #     return query
+
 
 class PropertyListByAgentView(ListAPIView):
     queryset = prop_models.Property.objects.all()
@@ -557,6 +562,7 @@ class PropertyListByAgentBranchView(ListAPIView):
     def get_queryset(self):
         agent_branch_id = self.kwargs["agent_branch"]
         queryset = super().get_queryset().filter(agent_branch=agent_branch_id)
+        
         return queryset
 
 

@@ -9,6 +9,7 @@ from rest_framework.generics import (
     ListCreateAPIView,
     CreateAPIView,
     ListAPIView,
+    RetrieveAPIView,
     RetrieveUpdateDestroyAPIView,
 )
 from rest_framework.views import APIView
@@ -718,3 +719,114 @@ def update_agent_discount_tracker(agent_id):
             tracker.used_discounts = tracker.used_discounts + 1
 
         tracker.save()
+
+
+class RequestListCreateView(CreateAPIView):
+    queryset = agent_models.Request.objects.all()
+    serializer_class = agent_serializers.RequestSerializer
+
+    def post(self, request):
+        with transaction.atomic():
+            # POP CLIENT REQUEST DATA
+            request_data = request.data.pop("request")
+
+            # POP MESSAGE DATA
+            request_message = request.data.pop("request_message")
+
+            # DESERIALIZE INCOMMING DATA
+            request_message_serializer = agent_serializers.RequestMessageSerializer(
+                data=request_message
+            )
+
+            # CHECK IF DATA IS VALID
+            request_message_serializer.is_valid(raise_exception=True)
+
+            # IF request_id IS NONE, THAT MEANS IT IS NEW REQUEST
+            if request_data["request_id"] is None:
+                # POP request_id AS WE DONT NEED IT BECAUSE IT IS NEW REQUEST DATA
+                request_data.pop("request_id")
+
+                # POP REQUESTOR CLIENT DATA
+                requester_data = request_data.pop("requester")
+
+                # CHECK IF REQUIESTER IS A REGISTERED USER. IF INCOMING EMAIL ID MATCHS
+                # ANY EMAIL IN DATABASE USERS, THEN IT IS A REGISTERED USER AND
+                registered_user = (
+                    get_user_model()
+                    .objects.filter(email=requester_data["email"])
+                    .first()
+                )
+
+                # DESERIALIZE THE INCOMING REQUESTER DATA FOR SAVE
+                requester_serializer = agent_serializers.RequesterSerializer(
+                    data=requester_data
+                )
+
+                # CHECK IF REQUESTER DATA IS VALID
+                requester_serializer.is_valid(raise_exception=True)
+
+                # DESERIALIZE REQUEST DATA FOR SAVE
+                request_serializer = agent_serializers.RequestSerializer(
+                    data=request_data
+                )
+
+                # CHECK IF REQUEST DATA IS VALID
+                request_serializer.is_valid(raise_exception=True)
+
+                # SAVE BOTH REQUEST AND REQUESTER DATA
+                requester_instance = requester_serializer.save(user=registered_user)
+                request_instance = request_serializer.save(requester=requester_instance)
+
+            # OTHERWISE IT IS A NEW CONVERSATION MESSAGE FOR EXISTING REQUEST
+            else:
+                try:
+                    # GET REQUEST FROM DB, OTHERWISE 404
+                    request_instance = agent_models.Request.objects.get(
+                        id=request_data["request_id"]
+                    )
+                except:
+                    return Response(
+                        {
+                            "errors": f"Client Request with id {request_data['request_id']} is not found."
+                        },
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+
+            # SAVE REQUEST MESSAGE
+            request_message_serializer.save(request=request_instance)
+            return Response(
+                {"data": request_message_serializer.data},
+                status=status.HTTP_201_CREATED,
+            )
+
+
+class RequestRetrieveView(RetrieveAPIView):
+    queryset = agent_models.Request.objects.all()
+    serializer_class = agent_serializers.RequestSerializer
+
+    def get(self, request, pk):
+        try:
+            result = agent_models.Request.objects.get(id=pk)
+        except:
+            return Response(
+                {"errors": f"Request ID {pk} not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return Response(
+            {"data": self.get_serializer(instance=result).data},
+            status=status.HTTP_200_OK,
+        )
+
+
+class RetrieveequestByAgentRView(RetrieveAPIView):
+    queryset = agent_models.Request.objects.all()
+    serializer_class = agent_serializers.RequestSerializer
+    permission_classes = [IsAgent]
+
+    def get(self, request):
+        agent_id = request.query_params.get("agent_branch")
+        requests = agent_models.Request.objects.filter(agent_branch=agent_id)
+        return Response(
+            {"data": self.get_serializer(instance=requests, many=True).data},
+            status=status.HTTP_200_OK,
+        )

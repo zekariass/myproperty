@@ -31,8 +31,8 @@ from apps.mixins.functions import (
     send_referrer_coupon_email,
 )
 from apps.mixins.constants import (
-    AGENT_REQUEST_TYPES,
-    AGENT_REQUEST_SENDER,
+    REQUESTER_REQUEST_TYPES,
+    REQUEST_MESSAGE_SENDERS,
     SYSTEM_MODULE_NAME_MYPROPERY,
     LISTING_PARAM_AGENT_REFERRAL_COUPON,
 )
@@ -509,7 +509,7 @@ class Requester(AddedOnFieldMixin):
     )
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.id} {self.first_name} {self.last_name}"
 
 
 class Request(AddedOnFieldMixin):
@@ -522,7 +522,12 @@ class Request(AddedOnFieldMixin):
         related_query_name="agent_request",
         help_text="The agent branch that the request is sent to",
     )
-    # listing = models.ForeignKey() #TODO
+    listing = models.ForeignKey(
+        "listings.Listing",
+        on_delete=models.CASCADE,
+        related_name="requests",
+        related_query_name="request",
+    )
     requester = models.ForeignKey(
         Requester,
         on_delete=models.CASCADE,
@@ -531,11 +536,11 @@ class Request(AddedOnFieldMixin):
         help_text="The user that the request is sent by",
     )
     request_type = models.CharField(
-        "type of request", max_length=100, choices=AGENT_REQUEST_TYPES
+        "type of request", max_length=100, choices=REQUESTER_REQUEST_TYPES
     )
 
     def __str__(self):
-        return f"{self.request_type}"
+        return f"{self.id} {self.request_type}"
 
 
 class RequestMessage(AddedOnFieldMixin):
@@ -543,11 +548,13 @@ class RequestMessage(AddedOnFieldMixin):
     thread or conversation will have same request ID as a reference to the request.
     This class has the following properties"""
 
-    request = models.ForeignKey(Request, on_delete=models.CASCADE)
+    request = models.ForeignKey(
+        Request, on_delete=models.CASCADE, related_name="messages"
+    )
     message = models.TextField()
     sender = models.CharField(
-        "message sender", max_length=100, choices=AGENT_REQUEST_SENDER
+        "message sender", max_length=100, choices=REQUEST_MESSAGE_SENDERS
     )
 
     def __str__(self):
-        return f"{self.sender}"
+        return f"{self.id} {self.sender}"
