@@ -6,10 +6,10 @@ from django.utils import timezone
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 
-from apps.agents.tasks import (
-    send_new_agent_branch_added_email_to_agent,
-    send_welcome_email_to_new_agent,
-)
+# from apps.agents.tasks import (
+#     send_new_agent_branch_added_email_to_agent,
+#     send_welcome_email_to_new_agent,
+# )
 from apps.system.serializers import PaymentMethodDiscountSerializer
 
 from . import models as agent_models
@@ -131,9 +131,9 @@ class AgentCreateSerializer(ModelSerializer):
                 )
 
                 # SEND NEW AGENT ADDED EMAIL
-                send_welcome_email_to_new_agent.delay(
-                    agent_branch=branch.id,
-                )
+                # send_welcome_email_to_new_agent.delay(
+                #     agent_branch=branch.id,
+                # )
 
                 # CHECK AGENT MODEL POST SAVE SIGNAL RECIEVER METHOD FOR REFERRAL CREATION
 
@@ -219,9 +219,9 @@ class AgentBranchSerializer(ModelSerializer):
                 )
 
                 # SEND NEW AGENT ADDED EMAIL
-                send_new_agent_branch_added_email_to_agent.delay(
-                    agent_branch=agent_branch.id,
-                )
+                # send_new_agent_branch_added_email_to_agent.delay(
+                #     agent_branch=agent_branch.id,
+                # )
 
                 return agent_branch
             except Exception as e:

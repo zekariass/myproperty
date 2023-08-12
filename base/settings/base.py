@@ -78,6 +78,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "base.wsgi.application"
+ASGI_APPLICATION = "base.asgi.application"
 
 
 # Password validation
@@ -116,7 +117,6 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-ASGI_APPLICATION = "base.asgi.application"
 
 # Custom user model
 AUTH_USER_MODEL = "users.MypropertyUser"

@@ -10,3 +10,6 @@ Django Task Queue and Scheduling
 
 ** djano-celery-results (To store task results)
 ####################################
+
+
+celery -A base worker -l INFO --pool=solo
