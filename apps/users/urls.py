@@ -12,10 +12,20 @@ urlpatterns = [
     # Users
     path("", auth_views.UserCreateView.as_view(), name="create-users"),
     path("list/", auth_views.UserListView.as_view(), name="list-users"),
+    # path(
+    #     "change-password/",
+    #     auth_views.ChangeUserPasswordView.as_view(),
+    #     name="change-password",
+    # ),
     path(
-        "change-password/",
-        auth_views.ChangeUserPasswordView.as_view(),
-        name="change-password",
+        "password/reset/request/",
+        auth_views.PasswordResetRequestView.as_view(),
+        name="password-reset-request",
+    ),
+    path(
+        "password/reset/",
+        auth_views.PasswordResetView.as_view(),
+        name="user-password-reset",
     ),
     path(
         "<int:pk>/",

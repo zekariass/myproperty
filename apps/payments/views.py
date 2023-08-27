@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.db import connection
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-from django.views.decorators.vary import vary_on_cookie, vary_on_headers
+from django.views.decorators.vary import vary_on_headers
 
 from rest_framework.generics import (
     ListCreateAPIView,
@@ -20,10 +20,10 @@ from apps.notifications.emails import helpers
 
 from apps.system import models as sys_models
 from apps.listings import models as listing_models
-from apps.agents.models import AgentBranch, AgentServiceSubscription
 from apps.agents import get_cached_or_from_db
 from . import tasks
 
+from apps.mixins.functions import get_success_response_dict, get_error_response_dict
 from apps.mixins import functions, constants
 
 from . import models as pay_models
@@ -324,8 +324,13 @@ class ListCreatePaymentView(ListCreateAPIView):
                 self.request, self.get_serializer, payment_data
             )
         except Exception as e:
-            return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(payment_result, status=status.HTTP_200_OK)
+            return Response(
+                get_error_response_dict(message=str(e)),
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(
+            get_success_response_dict(data=payment_result), status=status.HTTP_200_OK
+        )
 
 
 def perform_payment(request, payment_serializer, payment_data, **kwargs):
@@ -873,15 +878,16 @@ class ApprovePaymentView(RetrieveUpdateDestroyAPIView):
             payment_instance = pay_models.Payment.objects.get(pk=pk)
             if payment_instance.is_approved:
                 return Response(
-                    {"detail": "Payment already approved."}, status=status.HTTP_200_OK
+                    get_success_response_dict(message="Payment already approved."),
+                    status=status.HTTP_200_OK,
                 )
             updated_instance = approve_payment(payment_instance)
 
         except Exception as e:
             return Response(
-                {
-                    "errors": f"Something went wrong when updating payment approval status. {str(e)}"
-                },
+                get_error_response_dict(
+                    message=f"Something went wrong when updating payment approval status. {str(e)}"
+                ),
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -917,10 +923,10 @@ class ApprovePaymentView(RetrieveUpdateDestroyAPIView):
                     notification_topic=constants.NOTIFICATION_TOPIC_PAYMENT_ORDER_APPROVED,
                 )
         return Response(
-            {
-                "detail": "Approved.",
-                "data": self.get_serializer(instance=updated_instance).data,
-            },
+            get_success_response_dict(
+                data=self.get_serializer(instance=updated_instance).data,
+                message="Approved.",
+            ),
             status=status.HTTP_200_OK,
         )
 

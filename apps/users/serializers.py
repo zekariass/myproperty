@@ -135,9 +135,24 @@ class MypropertyUserNoPasswordSerializer(ModelSerializer):
         ]
 
 
-class ChangeUserPasswordSerializer(serializers.Serializer):
-    """Password change serializer. It shows only new and old password fields"""
+# class ChangeUserPasswordSerializer(serializers.Serializer):
+#     """Password change serializer. It shows only new and old password fields"""
 
-    old_password = serializers.CharField(required=True)
+#     old_password = serializers.CharField(required=True)
+#     new_password = serializers.CharField(required=True)
+#     # confirm_password = serializers.CharField(required=True)
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """Password reset request serializer"""
+
+    email = serializers.EmailField(required=True)
+    reset_url = serializers.CharField(required=True)
+
+
+class PasswordResetSerializer(serializers.Serializer):
+    """Password reset request serializer"""
+
+    # old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
-    # confirm_password = serializers.CharField(required=True)
+    login_url = serializers.CharField(required=True)

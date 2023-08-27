@@ -6,7 +6,7 @@ from celery import shared_task
 from apps.agents import get_cached_or_from_db
 from apps.mixins import constants
 from apps.notifications.emails.helpers import (
-    create_notification,
+    create_agent_notification,
     get_agent_notification_channel_preferences,
     get_agent_notification_preferences,
     get_new_property_added_notification_content,
@@ -58,7 +58,7 @@ def send_new_property_added_email_to_agent(*args, **kwargs):
         )
 
         # CREATE NOTIFICATION AND SAVE TO DB
-        create_notification(
+        create_agent_notification(
             title=subject,
             content=content_path,
             notification_topic=topic,

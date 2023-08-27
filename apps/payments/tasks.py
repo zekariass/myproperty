@@ -60,8 +60,8 @@ def send_payment_order_recieved_email_to_agent(*args, **kwargs):
             kwargs["agent_branch"]
         )
 
-        # CALL create_notification TO CREATE AND SAVE THE NOTIFICATION
-        helpers.create_notification(
+        # CALL create_agent_notification TO CREATE AND SAVE THE NOTIFICATION
+        helpers.create_agent_notification(
             title=subject,
             content=content_path,
             notification_topic=topic,
@@ -123,8 +123,8 @@ def send_payment_approved_email_to_agent(*args, **kwargs):
             kwargs["agent_branch"]
         )
 
-        # CALL create_notification TO CREATE AND SAVE THE NOTIFICATION
-        helpers.create_notification(
+        # CALL create_agent_notification TO CREATE AND SAVE THE NOTIFICATION
+        helpers.create_agent_notification(
             title=subject,
             content=content_path,
             notification_topic=topic,

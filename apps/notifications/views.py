@@ -1,3 +1,4 @@
+from email import message
 from django.shortcuts import render
 
 from rest_framework.response import Response
@@ -6,6 +7,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAdminUser
 
 from apps.mixins.permissions import IsAgent
+from apps.mixins.functions import get_success_response_dict, get_error_response_dict
 from apps.agents import models as agent_models
 
 from . import models as notif_models
@@ -29,11 +31,16 @@ class UserNotificationPreferenceListCreateView(ListCreateAPIView):
                     {"details": pref_serializer.data}, status=status.HTTP_201_CREATED
                 )
             return Response(
-                {"errors": "Anonymous user cannot create preference. Signup first."},
+                get_error_response_dict(
+                    message="Anonymous user cannot create preference. Signup first."
+                ),
                 status=status.HTTP_403_FORBIDDEN,
             )
         except Exception as e:
-            return Response({"errors": str(e)}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                get_error_response_dict(message=str(e)),
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
 
 class UserNotificationPreferenceRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -59,11 +66,16 @@ class UserNotificationChannelPreferenceListCreateView(ListCreateAPIView):
                     {"details": pref_serializer.data}, status=status.HTTP_201_CREATED
                 )
             return Response(
-                {"errors": "Anonymous user cannot create preference. Signup first."},
+                get_error_response_dict(
+                    message="Anonymous user cannot create preference. Signup first."
+                ),
                 status=status.HTTP_403_FORBIDDEN,
             )
         except Exception as e:
-            return Response({"errors": str(e)}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                get_error_response_dict(message=str(e)),
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
 
 class UserNotificationChannelPreferenceRetrieveUpdateDestroyView(
@@ -87,7 +99,9 @@ class AgentNotificationPreferenceListCreateView(ListCreateAPIView):
                 agent_instance = agent_models.Agent.objects.get(id=agent_id)
             except:
                 return Response(
-                    {"errors": f"Agent with id{agent_id} not found."},
+                    get_error_response_dict(
+                        message=f"Agent with id{agent_id} not found."
+                    ),
                     status=status.HTTP_404_NOT_FOUND,
                 )
             if agent_instance:
@@ -98,13 +112,16 @@ class AgentNotificationPreferenceListCreateView(ListCreateAPIView):
                     {"details": pref_serializer.data}, status=status.HTTP_201_CREATED
                 )
             return Response(
-                {
-                    "errors": "Anonymous agent cannot create preference. Crate Agent first."
-                },
+                get_error_response_dict(
+                    message="Anonymous agent cannot create preference. Crate Agent first."
+                ),
                 status=status.HTTP_403_FORBIDDEN,
             )
         except Exception as e:
-            return Response({"errors": str(e)}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                get_error_response_dict(message=str(e)),
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
 
 class AgentNotificationPreferenceRetrieveUpdateDestroyView(
@@ -127,7 +144,9 @@ class AgentNotificationChannelPreferenceListCreateView(ListCreateAPIView):
                 agent_instance = agent_models.Agent.objects.get(id=agent_id)
             except:
                 return Response(
-                    {"errors": f"Agent with id{agent_id} not found."},
+                    get_error_response_dict(
+                        message=f"Agent with id{agent_id} not found."
+                    ),
                     status=status.HTTP_404_NOT_FOUND,
                 )
             if agent_instance:
@@ -135,16 +154,20 @@ class AgentNotificationChannelPreferenceListCreateView(ListCreateAPIView):
                 pref_serializer.is_valid(raise_exception=True)
                 pref_serializer.save(agent=agent_instance)
                 return Response(
-                    {"details": pref_serializer.data}, status=status.HTTP_201_CREATED
+                    get_success_response_dict(data=pref_serializer.data),
+                    status=status.HTTP_201_CREATED,
                 )
             return Response(
-                {
-                    "errors": "Anonymous agent cannot create preference. Create Agent first."
-                },
+                get_error_response_dict(
+                    message="Anonymous agent cannot create preference. Create Agent first."
+                ),
                 status=status.HTTP_403_FORBIDDEN,
             )
         except Exception as e:
-            return Response({"errors": str(e)}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                get_error_response_dict(message=str(e)),
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
 
 class AgentNotificationChannelPreferenceRetrieveUpdateDestroyView(

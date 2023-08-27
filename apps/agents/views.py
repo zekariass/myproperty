@@ -21,9 +21,10 @@ from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
 from apps.agents import get_cached_or_from_db
 from apps.agents.tasks import send_new_service_subscription_email_to_agent
-from apps.mixins import constants
+from apps.mixins import constants, custom_pagination
 
 from apps.mixins.permissions import IsAgent
+from apps.mixins.functions import get_success_response_dict, get_error_response_dict
 from apps.payments.models import Payment
 from apps.payments.serializers import PaymentSerializer
 from apps.payments.views import perform_payment
@@ -36,10 +37,6 @@ from apps.system.models import (
 from apps.system.serializers import PaymentMethodDiscountSerializer
 from . import models as agent_models
 from . import serializers as agent_serializers
-
-from apps.mixins.permissions import IsAgent
-
-from apps.mixins.functions import generate_agent_branch_code
 
 
 # ====================== AGENT ====================================
@@ -65,6 +62,16 @@ class AgentListCreateView(ListCreateAPIView):
         else:
             return agent_serializers.AgentCreateSerializer
 
+    def post(self, request, *args, **kwargs):
+        try:
+            res = super().post(request, *args, **kwargs)
+            return res
+        except Exception as e:
+            return Response(
+                get_error_response_dict(message=str(e)),
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
 
 class AgentRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = agent_models.Agent.objects.all()
@@ -78,22 +85,22 @@ class AgentRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 class AgentBranchListCreateView(ListCreateAPIView):
     queryset = agent_models.AgentBranch.objects.all()
     serializer_class = agent_serializers.AgentBranchSerializer
+    pagination_class = custom_pagination.GeneralCustomPagination
 
     def get(self, request, pk):
         try:
             agent = agent_models.Agent.objects.get(pk=pk)
         except agent_models.Agent.DoesNotExist:
             return Response(
-                {"detail": f"No Agent found with id {pk}!"},
+                get_error_response_dict(message=f"No Agent found with id {pk}!"),
                 status=status.HTTP_404_NOT_FOUND,
             )
 
         agent_branches = agent.branches.all()
-        # print("===================>: ", len(connection.queries))
-        return Response(
-            {"detail": self.serializer_class(agent_branches, many=True).data},
-            status=status.HTTP_200_OK,
-        )
+        page = self.paginate_queryset(agent_branches)
+
+        serializer = self.serializer_class(page, many=True)
+        return self.get_paginated_response(serializer.data)
 
 
 class AgentBranchRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -131,23 +138,26 @@ class AgentAdminRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
         # SUPER ADMIN OF AN AGENT CAN NOT BE DELETED
         if admins.get(pk=pk).is_superadmin:
             return Response(
-                {
-                    "detail": "Super admin user can not be deleted. Consider changing to non super user before deleting."
-                },
+                get_error_response_dict(
+                    message="Super admin user can not be deleted. Consider changing to non super user before deleting."
+                ),
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         # IF AN AGENT HAS ONLY ONE ADMIN, AGENT ADMIN CAN NOT BE DELETED
         elif not admins.get(pk=pk).is_superadmin and admins.count() == 1:
             return Response(
-                {
-                    "detail": "Operation cannot be completed. At least one admin is required!"
-                },
+                get_error_response_dict(
+                    message="Operation cannot be completed. At least one admin is required!"
+                ),
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         agent_models.AgentAdmin.objects.get(pk=pk).delete()
-        return Response({"detail": "Admin deleted!"}, status=status.HTTP_200_OK)
+        return Response(
+            get_success_response_dict(message="Admin deleted!"),
+            status=status.HTTP_200_OK,
+        )
 
 
 class ServiceSubscriptionListCreateView(ListCreateAPIView):
@@ -173,7 +183,9 @@ class ServiceSubscriptionListCreateView(ListCreateAPIView):
 
                 if agent_has_active_subscription:
                     return Response(
-                        {"errors": "Agent has active subscription already!"},
+                        get_error_response_dict(
+                            message="Agent has active subscription already!"
+                        ),
                         status=status.HTTP_409_CONFLICT,
                     )
 
@@ -216,9 +228,10 @@ class ServiceSubscriptionListCreateView(ListCreateAPIView):
                     payment_instance = Payment.objects.get(id=payment_id)
                 except:
                     return Response(
-                        {
-                            "errors": "Payment not successful or there was something wrong with saving payment data."
-                        }
+                        get_error_response_dict(
+                            message="Payment not successful or there was something wrong with saving payment data."
+                        ),
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
 
                 # SAVE THE SERVICE SUBSCRIPTION
@@ -236,11 +249,16 @@ class ServiceSubscriptionListCreateView(ListCreateAPIView):
                     )
 
                 return Response(
-                    {"details": {"data": service_subscription_serializer.data}},
+                    get_success_response_dict(
+                        data=service_subscription_serializer.data
+                    ),
                     status=status.HTTP_200_OK,
                 )
             except Exception as e:
-                return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    get_error_response_dict(message=str(e)),
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
 
 def get_subscription_expiry_on(service_subscription_plan_instance):
@@ -308,7 +326,7 @@ class GetPayPerListingDiscountView(APIView):
             # CHECK IF USER IS AUTHENTICATED
             if not user.is_authenticated:
                 return Response(
-                    {"errors": "Sorry, you must sign first."},
+                    get_error_response_dict(message="Sorry, you must sign first."),
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
@@ -336,7 +354,9 @@ class GetPayPerListingDiscountView(APIView):
             # CHECK IF AGENT HAS ACTIVE SUBSCRIPTION
             if agent_instance.has_active_subscription:
                 return Response(
-                    {"errors": f"Agent has active subscription already."},
+                    get_error_response_dict(
+                        message=f"Agent has active subscription already."
+                    ),
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -399,11 +419,16 @@ class GetPayPerListingDiscountView(APIView):
             # GET THE SUM OF ALL DISCOUNTS THAT THE AGENT IS ELIGIBLE FOR
             all_discounts = get_discount_sum(new_agent_discount, seasonal_discount)
 
-            return Response({"data": all_discounts}, status=status.HTTP_200_OK)
+            return Response(
+                get_success_response_dict(data=all_discounts), status=status.HTTP_200_OK
+            )
 
         # CAPTURE ANY EXCEPTION DURING THE PROCESS
         except Exception as e:
-            return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                get_error_response_dict(message=str(e)),
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 def get_discount_sum(*discounts):
@@ -503,7 +528,7 @@ class GetSubscriptionDiscountView(APIView):
             # CHECK IF USER IS AUTHENTICATED
             if not user.is_authenticated:
                 return Response(
-                    {"errors": "Sorry, you must sign first."},
+                    get_error_response_dict(message="Sorry, you must sign first."),
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -514,7 +539,9 @@ class GetSubscriptionDiscountView(APIView):
                 ).get(user=user.id)
             except:
                 return Response(
-                    {"errors": "Sorry, user is not associated with any Agent."},
+                    get_error_response_dict(
+                        message="Sorry, user is not associated with any Agent."
+                    ),
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -524,16 +551,18 @@ class GetSubscriptionDiscountView(APIView):
             # COMPARE THE AGENT SENT FROM CLIENT AND THE AGET ASSOCIATED WITH ARE SAME
             if agent_instance.id != pk:
                 return Response(
-                    {
-                        "errors": f"Sorry, agent id {pk} is not your agent. Please provide the correct agent id."
-                    },
+                    get_error_response_dict(
+                        message=f"Sorry, agent id {pk} is not your agent. Please provide the correct agent id."
+                    ),
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
             # CHECK IF AGENT HAS ACTIVE SUBSCRIPTION
             if agent_instance.has_active_subscription:
                 return Response(
-                    {"errors": f"Agent has active subscription already."},
+                    get_error_response_dict(
+                        message=f"Agent has active subscription already."
+                    ),
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -649,11 +678,15 @@ class GetSubscriptionDiscountView(APIView):
                 loyalty_discount,
             )
 
-            return Response({"data": all_discounts}, status=status.HTTP_200_OK)
+            return Response(
+                get_success_response_dict(data=all_discounts), status=status.HTTP_200_OK
+            )
 
         except Exception as e:
-            return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-            # raise e
+            return Response(
+                get_error_response_dict(message=str(e)),
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 def get_new_agent_discount(agent_instance, payment_type):
@@ -786,16 +819,16 @@ class RequestListCreateView(CreateAPIView):
                     )
                 except:
                     return Response(
-                        {
-                            "errors": f"Client Request with id {request_data['request_id']} is not found."
-                        },
+                        get_error_response_dict(
+                            message=f"Client Request with id {request_data['request_id']} is not found."
+                        ),
                         status=status.HTTP_404_NOT_FOUND,
                     )
 
             # SAVE REQUEST MESSAGE
             request_message_serializer.save(request=request_instance)
             return Response(
-                {"data": request_message_serializer.data},
+                get_success_response_dict(data=request_message_serializer.data),
                 status=status.HTTP_201_CREATED,
             )
 
@@ -809,11 +842,11 @@ class RequestRetrieveView(RetrieveAPIView):
             result = agent_models.Request.objects.get(id=pk)
         except:
             return Response(
-                {"errors": f"Request ID {pk} not found."},
+                get_error_response_dict(message=f"Request ID {pk} not found."),
                 status=status.HTTP_404_NOT_FOUND,
             )
         return Response(
-            {"data": self.get_serializer(instance=result).data},
+            get_success_response_dict(data=self.get_serializer(instance=result).data),
             status=status.HTTP_200_OK,
         )
 
@@ -827,6 +860,8 @@ class RetrieveequestByAgentRView(RetrieveAPIView):
         agent_id = request.query_params.get("agent_branch")
         requests = agent_models.Request.objects.filter(agent_branch=agent_id)
         return Response(
-            {"data": self.get_serializer(instance=requests, many=True).data},
+            get_success_response_dict(
+                data=self.get_serializer(instance=requests, many=True).data
+            ),
             status=status.HTTP_200_OK,
         )

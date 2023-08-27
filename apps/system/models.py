@@ -213,7 +213,7 @@ class PaymentMethodDiscount(
     )
 
     def __str__(self):
-        return f"{self.payment_method}: {self.discount_percentage_value}% | {self.discount_percentage_value}"
+        return f"{self.payment_method}: {self.discount_percentage_value}% | {self.discount_fixed_value}"
 
 
 class Discount(StartAndExpireOnFieldMixin, DescriptionAndAddedOnFieldMixin):
@@ -752,13 +752,13 @@ class FeaturingPrice(DescriptionAndAddedOnFieldMixin):
         related_query_name="featuring_price",
     )
     price = models.DecimalField(decimal_places=5, max_digits=12, default=0.00000)
-    base_currency = models.ForeignKey(
-        Currency,
-        on_delete=models.CASCADE,
-        related_name="featuring_prices",
-        related_query_name="featuring_price",
-        help_text="The default currency for this featuring price.",
-    )
+    # base_currency = models.ForeignKey(
+    #     Currency,
+    #     on_delete=models.CASCADE,
+    #     related_name="featuring_prices",
+    #     related_query_name="featuring_price",
+    #     help_text="The default currency for this featuring price.",
+    # )
 
     def __str__(self):
         return f"{self.price}"

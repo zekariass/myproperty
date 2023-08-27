@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
 
+from apps.mixins.functions import get_success_response_dict, get_error_response_dict
 from apps.mixins import constants
 
 from . import models as sys_models
@@ -211,16 +212,16 @@ class CouponListCreateView(ListCreateAPIView):
         try:
             coupon_life_time = int(
                 sys_models.SystemParameter.objects.filter(
-                    name=constants.COUPON_LIFE_TIME
+                    name=constants.SYSTEM_PARAM_COUPON_LIFE_TIME
                 )
                 .first()
                 .value
             )
         except:
             return Response(
-                {
-                    "errors": f"No Coupon life time system parameter with name {constants.VOUCHER_LIFE_TIME} found. Add the parameter"
-                },
+                get_error_response_dict(
+                    message=f"No Coupon life time system parameter with name {constants.SYSTEM_PARAM_VOUCHER_LIFE_TIME} found. Add the parameter."
+                ),
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -249,16 +250,16 @@ class VoucherListCreateView(ListCreateAPIView):
         try:
             voucher_life_time = int(
                 sys_models.SystemParameter.objects.filter(
-                    name=constants.VOUCHER_LIFE_TIME
+                    name=constants.SYSTEM_PARAM_VOUCHER_LIFE_TIME
                 )
                 .first()
                 .value
             )
         except:
             return Response(
-                {
-                    "errors": f"No voucher life time system parameter with name {constants.VOUCHER_LIFE_TIME} found. Add the parameter"
-                },
+                get_error_response_dict(
+                    message=f"No voucher life time system parameter with name {constants.SYSTEM_PARAM_VOUCHER_LIFE_TIME} found. Add the parameter."
+                ),
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -343,17 +344,19 @@ class ReferralRewardPlanListCreateView(ListCreateAPIView):
             except ValueError:
                 # CAPTURE IF UNEXPIRED PLAN IS ALREADY EXIST FOR A SYSTEM MODULE
                 return Response(
-                    {
-                        "detail": "A system module can only have one unexpired reward plan."
-                    },
+                    get_error_response_dict(
+                        message="A system module can only have one unexpired reward plan."
+                    ),
                     status=status.HTTP_409_CONFLICT,
                 )
             return Response(
-                data=reward_plan_serializer.data, status=status.HTTP_201_CREATED
+                get_success_response_dict(data=reward_plan_serializer.data),
+                status=status.HTTP_201_CREATED,
             )
         else:
             return Response(
-                {"detail": "Data is invalid!"}, status=status.HTTP_400_BAD_REQUEST
+                get_error_response_dict(message="Data is invalid!"),
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 
@@ -376,13 +379,18 @@ class ReferralRewardPlanRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
                 reward_plan_serializer.save()
             except Exception as e:
                 # CAPTURE IF UNEXPIRED PLAN IS ALREADY EXIST FOR A SYSTEM MODULE
-                return Response({"detail": str(e)}, status=status.HTTP_409_CONFLICT)
+                return Response(
+                    get_error_response_dict(message=str(e)),
+                    status=status.HTTP_409_CONFLICT,
+                )
             return Response(
-                data=reward_plan_serializer.data, status=status.HTTP_201_CREATED
+                get_success_response_dict(data=reward_plan_serializer.data),
+                status=status.HTTP_201_CREATED,
             )
         else:
             return Response(
-                {"detail": "Data is not valid!"}, status=status.HTTP_400_BAD_REQUEST
+                get_error_response_dict(message="Data is not valid!"),
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 

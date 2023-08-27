@@ -13,3 +13,16 @@ Django Task Queue and Scheduling
 
 
 celery -A base worker -l INFO --pool=solo
+
+======Run docker=================
+sudo docker run -d -p 80:8000 --rm --name myproperty-api zekariass/myproperty:latest
+
+====EC2 INSTANCE=================
+http://3.9.237.21/properties/
+
+====DUMPING INITIAL CONFIG DATA============================
+python manage.py dumpdata system.system commons.country auth.group properties.amenitycategory properties.amenity properties.propertycategory properties.buildingtype properties.landtype properties.listingpricebypropertycategory properties.propertyimagelabel system.currency system.featuringprice system.notificationtopic system.listingparameter system.discount system.paymentmethod system.paymentmethoddiscount system.periodicity system.referralrewardplan system.servicesubscriptionplan system.supportedcardscheme system.systemassetowner system.systemasset system.systemparameter  --indent 2 --output=initial_config_data.json
+
+
+=====LOAD DUMPED DATA TO DB=======================
+python manage.py loaddata initial_data.json

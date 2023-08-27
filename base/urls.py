@@ -18,12 +18,12 @@ urlpatterns = [
         name="myproperty-schema",
     ),
     path(
-        "myproperty-api-docmentation/",
+        "api-documentation/",
         TemplateView.as_view(
             template_name="docmentation/myproperty-doc.html",
             extra_context={"schema_url": "myproperty-schema"},
         ),
-        name="myproperty-api-docmentation",
+        name="api-documentation",
     ),
     # User module
     path("users/", include("apps.users.urls")),

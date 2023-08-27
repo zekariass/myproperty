@@ -5,7 +5,7 @@ from django.conf import settings
 
 from apps.agents import get_cached_or_from_db
 from apps.notifications.emails.helpers import (
-    create_notification,
+    create_agent_notification,
     get_new_listing_added_notification_content,
 )
 
@@ -46,7 +46,7 @@ def send_new_listing_added_email_to_agent(*args, **kwargs):
     )
 
     # CREATE THE NOTIFICATION AND SAVE TO DB
-    create_notification(
+    create_agent_notification(
         title=subject,
         content=content_path,
         notification_topic=topic,

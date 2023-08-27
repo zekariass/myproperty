@@ -1,0 +1,9 @@
+__pycache__
+.mypropertyenv
+.vscode
+.gitignore
+.prettierrc
+db.sqlite3
+Dockerfile
+notes.txt
+.git

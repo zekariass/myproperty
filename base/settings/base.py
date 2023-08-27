@@ -129,6 +129,10 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ),
+    "DEFAULT_RENDERER_CLASSES": [
+        "base.custom_json_renderer.CustomJSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ],
     "EXCEPTION_HANDLER": "apps.mixins.functions.custom_exception_handler",
     "DEFAULT_PAGINATION_CLASS": "apps.mixins.custom_pagination.GeneralCustomPagination",
 }

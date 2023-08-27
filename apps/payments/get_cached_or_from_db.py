@@ -10,7 +10,6 @@ def get_unapproved_payments(**kwargs):
     if agent_branch_instance is None:
         try:
             agent_branch_instance = Payment.objects.filter(**kwargs)
-            print("==============>: HELOOOOOOOOOOOOOOOO from get_unapproved_payments")
             # print(agent_branch_instance)
             cache.set(f"unapproved_payments", agent_branch_instance, 60 * 60)
         except ObjectDoesNotExist:

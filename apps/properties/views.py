@@ -22,6 +22,7 @@ from apps.mixins.permissions import IsAdminUserOrReadOnly
 from apps.mixins.functions import generate_custom_property_id
 from apps.mixins import constants
 from apps.mixins.custom_pagination import GeneralCustomPagination
+from apps.mixins.functions import get_success_response_dict, get_error_response_dict
 
 
 # ====================== AMENITY CATEGORY ====================================
@@ -77,11 +78,11 @@ class ListingPriceByPropertyCategoryListCreateView(ListCreateAPIView):
                 self.perform_create(serializer)
             except Exception as e:
                 return Response(
-                    {"detail": str(e)},
+                    get_error_response_dict(message=str(e)),
                     status=status.HTTP_409_CONFLICT,
                 )
 
-        return Response(data=serializer.data, status=201)
+        return Response(get_success_response_dict(data=serializer.data), status=201)
 
 
 class ListingPriceByPropertyCategoryRetrieveUpdateDestroyView(
@@ -101,11 +102,14 @@ class ListingPriceByPropertyCategoryRetrieveUpdateDestroyView(
                 self.perform_update(serializer)
             except Exception as e:
                 return Response(
-                    {"detail": str(e)},
+                    get_error_response_dict(message=str(e)),
                     status=status.HTTP_409_CONFLICT,
                 )
 
-        return Response(data=serializer.data, status=201)
+        return Response(
+            get_success_response_dict(data=serializer.data),
+            status=status.HTTP_200_OK,
+        )
 
 
 # ====================== BUILDING TYPE ====================================
@@ -150,14 +154,16 @@ class PropertyKeyFeatureListCreateView(ListCreateAPIView):
             property_instance = prop_models.Property.objects.get(pk=property_id)
         except ObjectDoesNotExist:
             return Response(
-                {"errors": "Property not found"}, status=status.HTTP_404_NOT_FOUND
+                get_error_response_dict(message="Property not found."),
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         key_feature_serializer = self.get_serializer(data=request.data)
         key_feature_serializer.is_valid(raise_exception=True)
         key_feature_serializer.save(property=property_instance)
         return Response(
-            {"data": key_feature_serializer.data}, status=status.HTTP_404_NOT_FOUND
+            get_success_response_dict(data=key_feature_serializer.data),
+            status=status.HTTP_200_OK,
         )
 
 
@@ -205,7 +211,8 @@ class PropertyImageListCreateView(ListCreateAPIView):
             property_instance = prop_models.Property.objects.get(pk=property_id)
         except ObjectDoesNotExist:
             return Response(
-                {"errors": "Property not found"}, status=status.HTTP_404_NOT_FOUND
+                get_error_response_dict(message="Property not found"),
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         # LIST OF DATA IS EXPECTED
@@ -214,7 +221,10 @@ class PropertyImageListCreateView(ListCreateAPIView):
 
         image_serializer.save(property=property_instance)
 
-        return Response({"data": image_serializer.data}, status=status.HTTP_201_CREATED)
+        return Response(
+            get_success_response_dict(data=image_serializer.data),
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class PropertyImageRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -237,13 +247,17 @@ class PropertyVideoListCreateView(ListCreateAPIView):
             property_instance = prop_models.Property.objects.get(pk=property_id)
         except ObjectDoesNotExist:
             return Response(
-                {"errors": "Property not found"}, status=status.HTTP_404_NOT_FOUND
+                get_error_response_dict(message="Property not found."),
+                status=status.HTTP_404_NOT_FOUND,
             )
         # LIST OF DATA IS EXPECTED
         video_serializer = self.get_serializer(data=request.data, many=True)
         video_serializer.is_valid(raise_exception=True)
         video_serializer.save(property=property_instance)
-        return Response({"data": video_serializer.data}, status=status.HTTP_201_CREATED)
+        return Response(
+            get_success_response_dict(data=video_serializer.data),
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class PropertyVideoRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -266,13 +280,17 @@ class PropertyPlanListCreateView(ListCreateAPIView):
             property_instance = prop_models.Property.objects.get(pk=property_id)
         except ObjectDoesNotExist:
             return Response(
-                {"errors": "Property not found"}, status=status.HTTP_404_NOT_FOUND
+                get_error_response_dict(message="Property not found."),
+                status=status.HTTP_404_NOT_FOUND,
             )
         # LIST OF DATA IS EXPECTED
         plan_serializer = self.get_serializer(data=request.data, many=True)
         plan_serializer.is_valid(raise_exception=True)
         plan_serializer.save(property=property_instance)
-        return Response({"data": plan_serializer.data}, status=status.HTTP_201_CREATED)
+        return Response(
+            get_success_response_dict(data=plan_serializer.data),
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class PropertyPlanRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -296,16 +314,18 @@ class PropertyCreateView(ListCreateAPIView):
             # CHECK IF ADDRESS IS AVAILABLE IN INCOMING DATA, RESPOND BAD REQUEST OTEHRWISE
             if "address" not in data:
                 return Response(
-                    {"errors": "You must provide address of the property"},
+                    get_error_response_dict(
+                        message="You must provide address of the property."
+                    ),
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
             # CHECK IF SUB-PROPERTY, SUCH AS APARTMENT, VILLA, ETC. IS AVAILABLE IN INCOMING DATA, RESPOND BAD REQUEST OTEHRWISE
             if "sub_property" not in data:
                 return Response(
-                    {
-                        "errors": "You must add a sub-property, i.e. Apartment, Villa, etc"
-                    },
+                    get_error_response_dict(
+                        message="You must add a sub-property, i.e. Apartment, Villa, etc."
+                    ),
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -328,7 +348,10 @@ class PropertyCreateView(ListCreateAPIView):
                 )
 
             except ObjectDoesNotExist as odne:
-                return Response({"errors": str(odne)}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    get_error_response_dict(message=str(odne)),
+                    status=status.HTTP_404_NOT_FOUND,
+                )
 
             # DETERMINE THE TYPE OF PROPERTY BEING CREATED FOR ALL SUB-PROPERTIES AND STORE IN DICTIONARY
             new_property = {
@@ -369,12 +392,13 @@ class PropertyCreateView(ListCreateAPIView):
                 # RESPOND WITH INTEGRITY ERROR IF UNIQUE CONSTRAINT IS VIOLATED
                 except IntegrityError as ie:
                     return Response(
-                        {"errors": str(ie)},
+                        get_error_response_dict(message=str(ie)),
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     )
                 except Exception as e:
                     return Response(
-                        {"errors": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                        get_error_response_dict(message=str(e)),
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     )
 
             # GET THE RIGHT SERIALIZER CLASS FOR THE SUB-PROPERTY AND UNIT PROPERTIES, IF APPLICABLE
@@ -470,15 +494,14 @@ class PropertyCreateView(ListCreateAPIView):
                                 # CHECK AND RESPOND ERROR IF THERE IS INTEGRITY OR OTHER ERROR
                                 except IntegrityError as ie:
                                     return Response(
-                                        {
-                                            "detail": "Integrity error.",
-                                            "errors": str(ie),
-                                        },
+                                        get_error_response_dict(
+                                            message=f"Integrity error. {str(ie)}"
+                                        ),
                                         status=status.HTTP_409_CONFLICT,
                                     )
                                 except Exception as e:
                                     return Response(
-                                        {"detail": "Unknown error.", "errors": str(e)},
+                                        get_error_response_dict(message=str(ie)),
                                         status=status.HTTP_400_BAD_REQUEST,
                                     )
 
@@ -490,7 +513,7 @@ class PropertyCreateView(ListCreateAPIView):
                             for unit_ordered_dict in unit_serializer.data
                         ]
 
-                    tasks.send_new_property_added_email_to_agent(
+                    tasks.send_new_property_added_email_to_agent.delay(
                         custom_property_id=property_instance.custom_prop_id,
                         agent_branch=property_instance.agent_branch.id,
                     )
@@ -498,9 +521,9 @@ class PropertyCreateView(ListCreateAPIView):
                     # INCASE OF SHAREHOUSE, UNITS = ROOMS
 
                     return Response(
-                        {
-                            "detail": "Property created.",
-                            "data": {
+                        get_success_response_dict(
+                            message="Property created.",
+                            data={
                                 **property_serializer.data,
                                 "sub_property": {
                                     **sub_property_serializer.data,
@@ -508,7 +531,7 @@ class PropertyCreateView(ListCreateAPIView):
                                 },
                                 "address": {**address_serializer.data},
                             },
-                        },
+                        ),
                         status=status.HTTP_201_CREATED,
                     )
 
@@ -519,14 +542,14 @@ class PropertyCreateView(ListCreateAPIView):
             )
             # SEND RESPONSE IF PROPERTY IS NON MULTI-UNIT PROPERTY
             return Response(
-                {
-                    "detail": "Property created.",
-                    "data": {
+                get_success_response_dict(
+                    message="Property created.",
+                    data={
                         **property_serializer.data,
                         "sub_property": {**sub_property_serializer.data},
                         "address": {**address_serializer.data},
                     },
-                },
+                ),
                 status=status.HTTP_201_CREATED,
             )
 
@@ -562,7 +585,7 @@ class PropertyListByAgentBranchView(ListAPIView):
     def get_queryset(self):
         agent_branch_id = self.kwargs["agent_branch"]
         queryset = super().get_queryset().filter(agent_branch=agent_branch_id)
-        
+
         return queryset
 
 
@@ -590,7 +613,9 @@ class ApartmentUnitListCreateByApartmentView(ListCreateAPIView):
             apartment_instance = prop_models.Apartment.objects.get(pk=apartment_id)
         except ObjectDoesNotExist:
             return Response(
-                {"errors": {"apartment_unit": "Not Found."}},
+                get_error_response_dict(
+                    message=f"Apartment with id {apartment_id} Not Found."
+                ),
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -599,7 +624,8 @@ class ApartmentUnitListCreateByApartmentView(ListCreateAPIView):
         apartment_unit_serializer.is_valid(raise_exception=True)
         apartment_unit_serializer.save(apartment=apartment_instance)
         return Response(
-            {"data": apartment_unit_serializer.data}, status=status.HTTP_201_CREATED
+            get_success_response_dict(data=apartment_unit_serializer.data),
+            status=status.HTTP_201_CREATED,
         )
 
 
@@ -650,7 +676,9 @@ class RoomListCreateBySharehouseView(ListCreateAPIView):
             sharehouse_instance = prop_models.Sharehouse.objects.get(pk=sharehouse_id)
         except ObjectDoesNotExist:
             return Response(
-                {"errors": {"room": "Not Found."}},
+                get_error_response_dict(
+                    message=f"Sharehouse with id {sharehouse_id} not found."
+                ),
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -658,7 +686,10 @@ class RoomListCreateBySharehouseView(ListCreateAPIView):
         room_serializer = self.get_serializer(data=room_data)
         room_serializer.is_valid(raise_exception=True)
         room_serializer.save(sharehouse=sharehouse_instance)
-        return Response({"data": room_serializer.data}, status=status.HTTP_201_CREATED)
+        return Response(
+            get_success_response_dict(data=room_serializer.data),
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class SharehouseListByAgentView(ListAPIView):
@@ -812,7 +843,9 @@ class OfficeListCreateByCommercialPropertyView(ListCreateAPIView):
             )
         except ObjectDoesNotExist:
             return Response(
-                {"errors": {"office": "Not Found."}},
+                get_error_response_dict(
+                    message=f"Commercial Property with id {commercialproperty_id} not found."
+                ),
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -830,18 +863,18 @@ class OfficeListCreateByCommercialPropertyView(ListCreateAPIView):
                     else str(ie)
                 )
                 return Response(
-                    {"errors": err},
+                    get_error_response_dict(message=err),
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
             # IF EXCEPTION IS OTHER THAN INTEGRITY ERROR
             except Exception as exc:
                 return Response(
-                    {"errors": str(exc)},
+                    get_error_response_dict(message=str(exc)),
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
         return Response(
-            {"data": office_unit_serializer.data},
+            get_success_response_dict(data=office_unit_serializer.data),
             status=status.HTTP_201_CREATED,
         )
 
@@ -867,7 +900,9 @@ class OtherUnitListCreateByCommercialPropertyView(ListCreateAPIView):
             )
         except ObjectDoesNotExist:
             return Response(
-                {"errors": {"office": "Not Found."}},
+                get_error_response_dict(
+                    message=f"Commercial Property with id {commercialproperty_id} not found."
+                ),
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -885,17 +920,17 @@ class OtherUnitListCreateByCommercialPropertyView(ListCreateAPIView):
                     else str(ie)
                 )
                 return Response(
-                    {"errors": err},
+                    get_error_response_dict(message=err),
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
             # IF EXCEPTION IS OTHER THAN INTEGRITY ERROR
             except Exception as exc:
                 return Response(
-                    {"errors": str(exc)},
+                    get_error_response_dict(message=str(exc)),
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
         return Response(
-            {"data": other_unit_serializer.data},
+            get_success_response_dict(data=other_unit_serializer.data),
             status=status.HTTP_201_CREATED,
         )
 
@@ -979,7 +1014,7 @@ class PropertyCategoryAmenityCreateListView(ListCreateAPIView):
         # CHECK IF REQUEST DATA IS RECIEVED WITH 'AMENITIIES' ATTRIBUTE
         if not "amenities" in request.data:
             return Response(
-                {"errors": "List of amenities not provided."},
+                get_error_response_dict(message="List of amenities not provided."),
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -989,9 +1024,9 @@ class PropertyCategoryAmenityCreateListView(ListCreateAPIView):
         # CHECK IF LIST OF AMENITIES ARE RECIEVED FROM CLIENT
         if type(amenities).__name__ != "list":
             return Response(
-                {
-                    "errors": f"List of amenities expected. Got {type(amenities).__name__}"
-                },
+                get_error_response_dict(
+                    message=f"List of amenities expected. Got {type(amenities).__name__}"
+                ),
                 status=status.HTTP_404_NOT_FOUND,
             )
         try:
@@ -1001,7 +1036,9 @@ class PropertyCategoryAmenityCreateListView(ListCreateAPIView):
             )
         except ObjectDoesNotExist:
             return Response(
-                {"errors": "Property category not found."},
+                get_error_response_dict(
+                    message=f"Property category with id {property_category_id} not found."
+                ),
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -1019,17 +1056,21 @@ class PropertyCategoryAmenityCreateListView(ListCreateAPIView):
             # CAPTURE DUPLICATE SAVE
             except IntegrityError as ie:
                 return Response(
-                    {"errors": str(ie)},
+                    get_error_response_dict(message=str(ie)),
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
             return Response(
-                {"data": property_category_amenity_serializer.data},
+                get_success_response_dict(
+                    data=property_category_amenity_serializer.data
+                ),
                 status=status.HTTP_201_CREATED,
             )
         else:
             return Response(
-                {"errors": property_category_amenity_serializer.errors},
+                get_error_response_dict(
+                    message=property_category_amenity_serializer.errors
+                ),
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1059,7 +1100,7 @@ class PropertyAmenityCreateListView(ListCreateAPIView):
         # CHECK IF REQUEST DATA IS RECIEVED WITH 'AMENITIIES' ATTRIBUTE
         if not "amenities" in request.data:
             return Response(
-                {"errors": "List of amenities not provided."},
+                get_error_response_dict(message=f"List of amenities must be provided."),
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -1069,9 +1110,9 @@ class PropertyAmenityCreateListView(ListCreateAPIView):
         # CHECK IF LIST OF AMENITIES ARE RECIEVED FROM CLIENT
         if type(amenities).__name__ != "list":
             return Response(
-                {
-                    "errors": f"List of amenities expected. Got {type(amenities).__name__}"
-                },
+                get_error_response_dict(
+                    message=f"List of amenities expected. Got {type(amenities).__name__}"
+                ),
                 status=status.HTTP_404_NOT_FOUND,
             )
         try:
@@ -1079,7 +1120,9 @@ class PropertyAmenityCreateListView(ListCreateAPIView):
             property_instance = prop_models.Property.objects.get(id=property_id)
         except ObjectDoesNotExist:
             return Response(
-                {"errors": "Property not found."},
+                get_error_response_dict(
+                    message=f"Property with id {property_id} not found."
+                ),
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -1097,10 +1140,10 @@ class PropertyAmenityCreateListView(ListCreateAPIView):
         if not amenities_set.issubset(priperty_category_amenities_set):
             diff = amenities_set.difference(priperty_category_amenities_set)
             return Response(
-                {
-                    "errors": "Property amenities must be selected from amenities that are linked to the property category.",
-                    "detail": f"Amenities with id: {diff} are not linked to the property category",
-                },
+                get_error_response_dict(
+                    message=f"Amenities with id: {diff} are not linked to the property category. \
+                    Property amenities must be selected from amenities that are linked to the property category."
+                ),
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1116,17 +1159,17 @@ class PropertyAmenityCreateListView(ListCreateAPIView):
             # CAPTURE DUPLICATE SAVE
             except IntegrityError as ie:
                 return Response(
-                    {"errors": str(ie)},
+                    get_error_response_dict(message=str(ie)),
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
             return Response(
-                {"data": property_amenity_serializer.data},
+                get_success_response_dict(data=property_amenity_serializer.data),
                 status=status.HTTP_201_CREATED,
             )
         else:
             return Response(
-                {"errors": property_amenity_serializer.errors},
+                get_error_response_dict(message=property_amenity_serializer.errors),
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1149,7 +1192,7 @@ class ApartmentUnitAmenityCreateListView(ListCreateAPIView):
         # CHECK IF REQUEST DATA IS RECIEVED WITH 'AMENITIIES' ATTRIBUTE
         if not "amenities" in request.data:
             return Response(
-                {"errors": "List of amenities not provided."},
+                get_error_response_dict(message="List of amenities not provided."),
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -1159,9 +1202,9 @@ class ApartmentUnitAmenityCreateListView(ListCreateAPIView):
         # CHECK IF AMENITIES ARE RECIEVED FROM CLIENT IN LIST DATA STRUCTURE
         if type(amenities).__name__ != "list":
             return Response(
-                {
-                    "errors": f"List of amenities expected. Got {type(amenities).__name__}"
-                },
+                get_error_response_dict(
+                    message=f"List of amenities expected. Got {type(amenities).__name__}"
+                ),
                 status=status.HTTP_404_NOT_FOUND,
             )
         try:
@@ -1172,7 +1215,9 @@ class ApartmentUnitAmenityCreateListView(ListCreateAPIView):
             property_instance = apartment_unit_instance.apartment.parent_property
         except ObjectDoesNotExist:
             return Response(
-                {"errors": "Property not found."},
+                get_error_response_dict(
+                    message=f"Apartment Unit with id {apartmentunit_id} not found."
+                ),
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -1190,10 +1235,10 @@ class ApartmentUnitAmenityCreateListView(ListCreateAPIView):
         if not amenities_set.issubset(priperty_category_amenities_set):
             diff = amenities_set.difference(priperty_category_amenities_set)
             return Response(
-                {
-                    "errors": "Property amenities must be selected from amenities that are linked to the property category.",
-                    "detail": f"Amenities with id: {diff} are not linked to the property category",
-                },
+                get_error_response_dict(
+                    message=f"Amenities with ids: {diff} are not linked to the property category \
+                        Property amenities must be selected from amenities that are linked to the property category."
+                ),
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1211,17 +1256,19 @@ class ApartmentUnitAmenityCreateListView(ListCreateAPIView):
             # CAPTURE DUPLICATE SAVE
             except IntegrityError as ie:
                 return Response(
-                    {"errors": str(ie)},
+                    get_error_response_dict(message=str(ie)),
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
             return Response(
-                {"data": apartment_unit_amenity_serializer.data},
+                get_success_response_dict(data=apartment_unit_amenity_serializer.data),
                 status=status.HTTP_201_CREATED,
             )
         else:
             return Response(
-                {"errors": apartment_unit_amenity_serializer.errors},
+                get_error_response_dict(
+                    message=apartment_unit_amenity_serializer.errors
+                ),
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1244,7 +1291,7 @@ class OfficeUnitAmenityCreateListView(ListCreateAPIView):
         # CHECK IF REQUEST DATA IS RECIEVED WITH 'AMENITIIES' ATTRIBUTE
         if not "amenities" in request.data:
             return Response(
-                {"errors": "List of amenities not provided."},
+                get_error_response_dict(message="List of amenities not provided."),
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -1254,9 +1301,9 @@ class OfficeUnitAmenityCreateListView(ListCreateAPIView):
         # CHECK IF AMENITIES ARE RECIEVED FROM CLIENT IN LIST DATA STRUCTURE
         if type(amenities).__name__ != "list":
             return Response(
-                {
-                    "errors": f"List of amenities expected. Got {type(amenities).__name__}"
-                },
+                get_error_response_dict(
+                    message=f"List of amenities expected. Got {type(amenities).__name__}"
+                ),
                 status=status.HTTP_404_NOT_FOUND,
             )
         try:
@@ -1265,7 +1312,9 @@ class OfficeUnitAmenityCreateListView(ListCreateAPIView):
             property_instance = office_unit_instance.commercial_property.parent_property
         except ObjectDoesNotExist:
             return Response(
-                {"errors": "Property not found."},
+                get_error_response_dict(
+                    message=f"Office Unit with id {officeunit_id} not found."
+                ),
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -1283,10 +1332,10 @@ class OfficeUnitAmenityCreateListView(ListCreateAPIView):
         if not amenities_set.issubset(priperty_category_amenities_set):
             diff = amenities_set.difference(priperty_category_amenities_set)
             return Response(
-                {
-                    "errors": "Office unit amenities must be selected from amenities that are linked to the property category.",
-                    "detail": f"Amenities with id: {diff} are not linked to the property category",
-                },
+                get_error_response_dict(
+                    message=f"Amenities with id: {diff} are not linked to the property category. \
+                        Office unit amenities must be selected from amenities that are linked to the property category."
+                ),
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1302,17 +1351,17 @@ class OfficeUnitAmenityCreateListView(ListCreateAPIView):
             # CAPTURE DUPLICATE SAVE
             except IntegrityError as ie:
                 return Response(
-                    {"errors": str(ie)},
+                    get_error_response_dict(message=str(ie)),
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
             return Response(
-                {"data": office_unit_amenity_serializer.data},
+                get_success_response_dict(data=office_unit_amenity_serializer.data),
                 status=status.HTTP_201_CREATED,
             )
         else:
             return Response(
-                {"errors": office_unit_amenity_serializer.errors},
+                get_error_response_dict(message=office_unit_amenity_serializer.errors),
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1337,7 +1386,7 @@ class OtherCommercialPropertyUnitAmenityCreateListView(ListCreateAPIView):
         # CHECK IF REQUEST DATA IS RECIEVED WITH 'AMENITIIES' ATTRIBUTE
         if not "amenities" in request.data:
             return Response(
-                {"errors": "List of amenities not provided."},
+                get_error_response_dict(message="List of amenities not provided."),
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -1347,9 +1396,9 @@ class OtherCommercialPropertyUnitAmenityCreateListView(ListCreateAPIView):
         # CHECK IF AMENITIES ARE RECIEVED FROM CLIENT IN LIST DATA STRUCTURE
         if type(amenities).__name__ != "list":
             return Response(
-                {
-                    "errors": f"List of amenities expected. Got {type(amenities).__name__}"
-                },
+                get_error_response_dict(
+                    message=f"List of amenities expected. Got {type(amenities).__name__}"
+                ),
                 status=status.HTTP_404_NOT_FOUND,
             )
         try:
@@ -1360,7 +1409,9 @@ class OtherCommercialPropertyUnitAmenityCreateListView(ListCreateAPIView):
             property_instance = other_unit_instance.commercial_property.parent_property
         except ObjectDoesNotExist:
             return Response(
-                {"errors": "Property not found."},
+                get_error_response_dict(
+                    message=f"Other Commercial Property Unit with id {otherunit_id} not found."
+                ),
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -1378,10 +1429,10 @@ class OtherCommercialPropertyUnitAmenityCreateListView(ListCreateAPIView):
         if not amenities_set.issubset(property_category_amenities_set):
             diff = amenities_set.difference(property_category_amenities_set)
             return Response(
-                {
-                    "errors": "Other commercial property unit amenities must be selected from amenities that are linked to the property category.",
-                    "detail": f"Amenities with id: {diff} are not linked to the property category",
-                },
+                get_error_response_dict(
+                    message=f"Amenities with ids: {diff} are not linked to the property category \
+                        Other commercial property unit amenities must be selected from amenities that are linked to the property category."
+                ),
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1399,17 +1450,17 @@ class OtherCommercialPropertyUnitAmenityCreateListView(ListCreateAPIView):
             # CAPTURE DUPLICATE SAVE
             except IntegrityError as ie:
                 return Response(
-                    {"errors": str(ie)},
+                    get_error_response_dict(message=str(ie)),
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
             return Response(
-                {"data": other_unit_amenity_serializer.data},
+                get_success_response_dict(data=other_unit_amenity_serializer.data),
                 status=status.HTTP_201_CREATED,
             )
         else:
             return Response(
-                {"errors": other_unit_amenity_serializer.errors},
+                get_error_response_dict(message=other_unit_amenity_serializer.errors),
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

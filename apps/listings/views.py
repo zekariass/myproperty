@@ -1,12 +1,9 @@
 from datetime import timedelta
 from django.forms import model_to_dict
-from django.shortcuts import render
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
-from phonenumbers import is_number_match
 from rest_framework.generics import (
-    ListCreateAPIView,
     CreateAPIView,
     ListAPIView,
     RetrieveUpdateDestroyAPIView,
@@ -15,7 +12,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAdminUser
 from apps.agents.views import update_agent_discount_tracker
-from apps.commons.models import Tag
 from apps.listings.tasks import send_new_listing_added_email_to_agent
 from apps.mixins.custom_pagination import GeneralCustomPagination
 
@@ -30,12 +26,9 @@ from apps.mixins.permissions import (
 )
 from apps.mixins import constants
 from apps.mixins.functions import get_boolean_url_query_value
+from apps.mixins.functions import get_success_response_dict, get_error_response_dict
 from apps.system import models as sys_models
 from django.db import connection, transaction
-
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
-from django.views.decorators.vary import vary_on_cookie, vary_on_headers
 
 from . import models as listing_models
 from . import serializers as listing_serializers
@@ -67,7 +60,9 @@ class ListingCreateView(CreateAPIView):
                 property_instance = prop_models.Property.objects.get(id=_property)
             except ObjectDoesNotExist:
                 return Response(
-                    {"error": f"Property with id {_property} is not found!"},
+                    get_error_response_dict(
+                        message=f"Property with id {_property} is not found!"
+                    ),
                     status=status.HTTP_404_NOT_FOUND,
                 )
             try:
@@ -77,7 +72,9 @@ class ListingCreateView(CreateAPIView):
                 )
             except ObjectDoesNotExist:
                 return Response(
-                    {"error": f"Property with id {_property} is not found!"},
+                    get_error_response_dict(
+                        message=f"Agent branch with id {_agent_branch} is not found!"
+                    ),
                     status=status.HTTP_404_NOT_FOUND,
                 )
 
@@ -124,7 +121,10 @@ class ListingCreateView(CreateAPIView):
                     listing_payment_type=listing_payment_type,
                 )
             except Exception as e:
-                return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    get_error_response_dict(message=str(e)),
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             # CHECK IF LISTING IS OF TYPE RENT AND SAVE IF SO
             if listing_instance.listing_type == constants.LISTING_TYPE_RENT:
@@ -196,7 +196,10 @@ class ListingCreateView(CreateAPIView):
             try:
                 sub_listing_serializer.save(listing=listing_instance)
             except Exception as e:
-                return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    get_error_response_dict(message=str(e)),
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             update_agent_discount_tracker(agent_branch_instance.agent.id)
 
@@ -208,7 +211,8 @@ class ListingCreateView(CreateAPIView):
             )
 
             return Response(
-                {"data": listing_serializer.data}, status=status.HTTP_201_CREATED
+                get_success_response_dict(data=listing_serializer.data),
+                status=status.HTTP_201_CREATED,
             )
 
     # @method_decorator(cache_page(60 * 60 * 2))
@@ -248,8 +252,8 @@ class ListingRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
                 listing_instance = listing_models.Listing.objects.get(pk=pk)
             except:
                 return Response(
-                    {"errors": f"Listing with id {pk} not found!"},
-                    status=status.HTTP_400_BAD_REQUEST,
+                    get_error_response_dict(message=f"Listing with id {pk} not found!"),
+                    status=status.HTTP_404_NOT_FOUND,
                 )
 
             # CHECK IF LISTING TYPE IS CHANGED. LISTING TYPE CAN NOT BE CHANGED, SUCH AS FROM RENT TO SALE
@@ -258,9 +262,9 @@ class ListingRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
                 and listing_instance.listing_type != request.data["listing_type"]
             ):
                 return Response(
-                    {
-                        "errors": f"Listing type can not be changed from {listing_instance.listing_type} to {request.data['listing_type']}"
-                    },
+                    get_error_response_dict(
+                        message=f"Listing type can not be changed from {listing_instance.listing_type} to {request.data['listing_type']}"
+                    ),
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -271,9 +275,9 @@ class ListingRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
                 != request.data["listing_payment_type"]
             ):
                 return Response(
-                    {
-                        "errors": f"Listing payment type can not be changed from {listing_instance.listing_payment_type} to {request.data['listing_payment_type']}"
-                    },
+                    get_error_response_dict(
+                        message=f"Listing payment type can not be changed from {listing_instance.listing_payment_type} to {request.data['listing_payment_type']}"
+                    ),
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -287,7 +291,10 @@ class ListingRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
                 # SAVE LISTING SERIALIZER
                 listing_serializer.save()
             except Exception as e:
-                return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    get_error_response_dict(message=str(e)),
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             # CHECK IF THE LISTING TYPE AND RETRIEVE LISTING TYPE DATA INSTANCE AND GET SERIALIZER
             if listing_instance.listing_type == constants.LISTING_TYPE_RENT:
@@ -298,10 +305,10 @@ class ListingRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
                     )
                 except:
                     return Response(
-                        {
-                            "errors": f"Rent listing with id {listing_type_data['id']} not found!"
-                        },
-                        status=status.HTTP_400_BAD_REQUEST,
+                        get_error_response_dict(
+                            message=f"Rent listing with id {listing_type_data['id']} not found!"
+                        ),
+                        status=status.HTTP_404_NOT_FOUND,
                     )
 
                 _listing_type_serilaizer = listing_serializers.RentListingSerializer
@@ -313,10 +320,10 @@ class ListingRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
                     )
                 except:
                     return Response(
-                        {
-                            "errors": f"Sale listing with id {listing_type_data['id']} not found!"
-                        },
-                        status=status.HTTP_400_BAD_REQUEST,
+                        get_error_response_dict(
+                            message=f"Sale listing with id {listing_type_data['id']} not found!"
+                        ),
+                        status=status.HTTP_404_NOT_FOUND,
                     )
 
                 _listing_type_serilaizer = listing_serializers.SaleListingSerializer
@@ -330,15 +337,18 @@ class ListingRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
                 # SAVE LISTING TYPE DATA
                 listing_type_serilaizer.save()
             except Exception as e:
-                return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    get_error_response_dict(message=str(e)),
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             return Response(
-                {
-                    "data": {
+                get_success_response_dict(
+                    data={
                         "listing": listing_serializer.data,
                         "listing_type_data": listing_type_serilaizer.data,
                     }
-                },
+                ),
                 status=status.HTTP_200_OK,
             )
 
@@ -396,7 +406,10 @@ class PublicListingListUsingQuryParamAPIView(ListAPIView):
 
             return paginator.get_paginated_response(listing_serializer.data)
         except Exception as e:
-            return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                get_error_response_dict(message=str(e)),
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class AgentListingListUsingQuryParamAPIView(ListAPIView):
@@ -425,7 +438,10 @@ class AgentListingListUsingQuryParamAPIView(ListAPIView):
 
             if not agent_admin_instance.exists():
                 return Response(
-                    {"errors": "You need to signin as Agent to access your listings"}
+                    get_error_response_dict(
+                        message="You need to signin as Agent to access your listings"
+                    ),
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             # GET THE AGENT AND AGENT BRANCH THE CURRENT USER IS WORKING IN
@@ -486,7 +502,10 @@ class AgentListingListUsingQuryParamAPIView(ListAPIView):
 
             return paginator.get_paginated_response(listing_serializer.data)
         except Exception as e:
-            return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                get_error_response_dict(message=str(e)),
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class AdminListingListUsingQuryParamAPIView(ListAPIView):
@@ -546,7 +565,10 @@ class AdminListingListUsingQuryParamAPIView(ListAPIView):
             return paginator.get_paginated_response(listing_serializer.data)
 
         except Exception as e:
-            return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                get_error_response_dict(message=str(e)),
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 def get_constructed_lookup_and_order_by_params(

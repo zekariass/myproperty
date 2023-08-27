@@ -13,9 +13,9 @@ from django.utils import timezone
 from django.conf import settings
 
 from apps.commons import models as cmns_models
+from apps.mixins import constants
 from apps.system import models as sys_models
 
-# from apps.payments.models import Payment
 
 from apps.mixins.common_fields import (
     AddedOnFieldMixin,
@@ -26,15 +26,12 @@ from apps.mixins.common_fields import (
 from apps.mixins.functions import (
     generate_coupon_code,
     create_coupon,
-    send_email_to_user,
-    send_referee_coupon_email,
-    send_referrer_coupon_email,
 )
 from apps.mixins.constants import (
     REQUESTER_REQUEST_TYPES,
     REQUEST_MESSAGE_SENDERS,
     SYSTEM_MODULE_NAME_MYPROPERY,
-    LISTING_PARAM_AGENT_REFERRAL_COUPON,
+    LISTING_PARAM_AGENT_REFERRAL_COUPON_MAX_USE,
 )
 
 
@@ -90,17 +87,21 @@ class Agent(DescriptionAndAddedOnFieldMixin):
 
 @receiver(post_save, sender=Agent)
 def agent_post_save(sender, instance, created, **kwargs):
-    if created and instance.referred_by:
+    if created and instance.referred_by is not None:
+        from apps.agents import tasks
+
         referrer_agent = instance.referred_by
         # CREATE REFERRAL
         # CHECK IF THERE IS PLAN FOR MYPROPERTY MODULE
         referrer_coupon = None
         referee_coupon = None
         with transaction.atomic():
+            # CHECK IF REFERRAL REWARD PLAN IS AVAILABLE
             available_reward_plan = sys_models.ReferralRewardPlan.objects.filter(
                 expire_on__gt=timezone.now(),
                 system__name=SYSTEM_MODULE_NAME_MYPROPERY,
             ).first()
+
             if available_reward_plan:
                 # CREATE OR UPDATE AGENT REFERRAL TRACKER
                 # IF THERE IS TRACKER WITH is_open=True, UPDATE IT, OTHERWISE CREATE NEW
@@ -118,6 +119,7 @@ def agent_post_save(sender, instance, created, **kwargs):
                     agent=referrer_agent,
                 )
 
+                # IF NEW TRACKER IS CREATED, SET THE CURRENT REFERRALS TO 1
                 if not new_created:
                     AgentReferralTracker.objects.filter(
                         pk=referral_tracker_obj.id
@@ -154,14 +156,14 @@ def agent_post_save(sender, instance, created, **kwargs):
                     available_reward_plan.referee_reward_fixed_value
                 )
 
-                # GET AGENT REFERRAL COUPON LISTING PARAMETER
+                # GET AGENT REFERRAL COUPON MAX USE LISTING PARAMETER
                 listing_param_for_agent_referral_coupon = (
                     sys_models.ListingParameter.objects.filter(
-                        name=LISTING_PARAM_AGENT_REFERRAL_COUPON
+                        name=LISTING_PARAM_AGENT_REFERRAL_COUPON_MAX_USE
                     ).first()
                 )
 
-                coupon_total_use = 0
+                coupon_total_use = 1
                 if (
                     listing_param_for_agent_referral_coupon
                     and listing_param_for_agent_referral_coupon.is_active
@@ -169,8 +171,19 @@ def agent_post_save(sender, instance, created, **kwargs):
                     coupon_total_use = int(
                         listing_param_for_agent_referral_coupon.value
                     )
-                    will_expire_after_days = (
-                        listing_param_for_agent_referral_coupon.will_expire_after_days
+
+                # THE LIFE TIME OF THE COUPON. IT IS THE NUMBER OF DAYS THE COUPON STAY VALID
+                coupon_life_time = 1
+
+                coupon_life_time_sys_param_instance = (
+                    sys_models.SystemParameter.objects.filter(
+                        name=constants.SYSTEM_PARAM_COUPON_LIFE_TIME
+                    )
+                )
+
+                if coupon_life_time_sys_param_instance.exists():
+                    coupon_life_time = int(
+                        coupon_life_time_sys_param_instance.first().value
                     )
 
                 # CREATE COUPON FOR REFEREE AGENT
@@ -186,19 +199,18 @@ def agent_post_save(sender, instance, created, **kwargs):
                         discount_fixed_value=referee_discount_fixed_value,
                         total_use=coupon_total_use,
                         use_count=0,
-                        expire_on=datetime.date.today()
-                        + datetime.timedelta(days=will_expire_after_days),
-                        # listing_parameter = listing_param_for_agent_referral_coupon,
+                        expire_on=timezone.now()
+                        + datetime.timedelta(days=coupon_life_time),
                         system=system,
                     )
 
                     # EMAIL THE CODE TO RFEREE AND REFERRER
-                    if referee_coupon:
-                        send_referee_coupon_email(
-                            referee_coupon,
-                            referrer_discount_percentage_value,
-                            referrer_discount_fixed_value,
-                            "zemaedot3@gmail.com",
+                    if referee_coupon is not None:
+                        tasks.send_referee_coupon_email.delay(
+                            referee_coupon=referee_coupon_code,
+                            percentage_value=referee_discount_percentage_value,
+                            fixed_value=referee_discount_fixed_value,
+                            agent_id=instance.id,
                         )
 
                 # GET THE NEW OR UPDATE AGENT REFERRAL TRACKER OBJECT
@@ -206,9 +218,10 @@ def agent_post_save(sender, instance, created, **kwargs):
                     pk=referral_tracker_obj.id
                 )
 
+                # CREATE REFERER COUPON IF REFERER HAS REFERRED ENOUGH REFERRALS TO BE REWARDED
                 if (
                     post_save_referral_tracker_state.first().num_of_current_referrals
-                    >= post_save_referral_tracker_state.first().referral_reward_plan.number_of_referrals_needed
+                    == post_save_referral_tracker_state.first().referral_reward_plan.number_of_referrals_needed
                 ):
                     # GENERATE COUPON CODE
                     referrer_coupon_code = generate_coupon_code()
@@ -221,8 +234,8 @@ def agent_post_save(sender, instance, created, **kwargs):
                         discount_fixed_value=referrer_discount_fixed_value,
                         total_use=coupon_total_use,
                         use_count=0,
-                        expire_on=datetime.date.today()
-                        + datetime.timedelta(days=will_expire_after_days),
+                        expire_on=timezone.now()
+                        + datetime.timedelta(days=coupon_life_time),
                         # listing_parameter = listing_param_for_agent_referral_coupon,
                         system=system,
                     )
@@ -232,11 +245,11 @@ def agent_post_save(sender, instance, created, **kwargs):
                         post_save_referral_tracker_state.update(is_open=False)
 
                         # EMAIL THE CODE TO REFERRER
-                        send_referrer_coupon_email(
-                            referrer_coupon,
-                            referrer_discount_percentage_value,
-                            referrer_discount_fixed_value,
-                            "zemaedot3@gmail.com",
+                        tasks.send_referrer_coupon_email.delay(
+                            referrer_coupon=referrer_coupon_code,
+                            percentage_value=referrer_discount_percentage_value,
+                            fixed_value=referee_discount_fixed_value,
+                            agent_id=referrer_agent.id,
                         )
 
 

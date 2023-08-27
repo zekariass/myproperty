@@ -119,6 +119,36 @@ def get_new_listing_added_notification_content(context_data=None):
     return (email_content, content_path, topic)
 
 
+def get_referrer_coupon_email_notification_content(context_data=None):
+    topic = get_notification_topic(constants.NOTIFICATION_TOPIC_REFERRER_COUPON)
+    content_path = "emails/referrer_agent_coupon.html"
+    email_content = render_to_string(content_path, context_data)
+    return (email_content, content_path, topic)
+
+
+def get_referee_coupon_email_notification_content(context_data=None):
+    topic = get_notification_topic(constants.NOTIFICATION_TOPIC_REFEREE_COUPON)
+    content_path = "emails/referee_agent_coupon.html"
+    email_content = render_to_string(content_path, context_data)
+    return (email_content, content_path, topic)
+
+
+def get_password_reset_link_request_email_notification_content(context_data=None):
+    topic = get_notification_topic(constants.NOTIFICATION_TOPIC_PASSWORD_RESET_LINK)
+    content_path = "emails/password_reset_link_request.html"
+    email_content = render_to_string(content_path, context_data)
+    return (email_content, content_path, topic)
+
+
+def get_password_changed_confirmation_email_notification_content(context_data=None):
+    topic = get_notification_topic(
+        constants.NOTIFICATION_TOPIC_PASSWORD_CHANGE_CONFIRMATION
+    )
+    content_path = "emails/password_changed_confirmation.html"
+    email_content = render_to_string(content_path, context_data)
+    return (email_content, content_path, topic)
+
+
 def get_notification_topic(topic_name):
     # Get notification topic from the database
     try:
@@ -128,9 +158,9 @@ def get_notification_topic(topic_name):
     return topic
 
 
-def create_notification(**kwargs):
+def create_agent_notification(**kwargs):
     """
-    Create the notifiocation and save to DB
+    Create agent notifiocation and save to DB
 
     Keyword Arguments:
 
@@ -142,5 +172,22 @@ def create_notification(**kwargs):
     """
     try:
         notif_models.AgentNotification.objects.create(**kwargs)
+    except Exception as e:
+        raise Exception(f"File: {__file__} function: create_notification: {str(e)}")
+
+
+def create_user_notification(**kwargs):
+    """
+    Create user notifiocation and save to DB
+
+    Keyword Arguments:
+
+        title,
+        content,
+        notification_topic,
+        user,
+    """
+    try:
+        notif_models.UserNotification.objects.create(**kwargs)
     except Exception as e:
         raise Exception(f"File: {__file__} function: create_notification: {str(e)}")

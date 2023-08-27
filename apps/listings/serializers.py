@@ -1,11 +1,9 @@
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
-from django.core.exceptions import ValidationError
 from django.utils import timezone
 from apps.commons.models import Tag
 
 from apps.mixins import constants
-from apps.properties.serializers import PropertyAnySerializer
 
 from . import models as listing_models
 

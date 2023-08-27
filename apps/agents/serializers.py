@@ -6,10 +6,10 @@ from django.utils import timezone
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 
-# from apps.agents.tasks import (
-#     send_new_agent_branch_added_email_to_agent,
-#     send_welcome_email_to_new_agent,
-# )
+from apps.agents.tasks import (
+    send_new_agent_branch_added_email_to_agent,
+    send_welcome_email_to_new_agent,
+)
 from apps.system.serializers import PaymentMethodDiscountSerializer
 
 from . import models as agent_models
@@ -22,7 +22,6 @@ from apps.system import models as sys_models
 from apps.mixins.functions import (
     generate_agent_branch_code,
     generate_agent_referral_code,
-    send_new_agent_created_email,
 )
 from apps.mixins.constants import USER_GROUP_AGENT, AGENT_REFERRAL_CODE_INITIAL
 
@@ -91,6 +90,15 @@ class AgentCreateSerializer(ModelSerializer):
         address = agent_main_branch_data.pop("address")
         with transaction.atomic():
             try:
+                # CHECK IF THE USER HAS ASSOCIATED AGENT IN AGENT ADMIN
+                user_associated_agent = agent_models.AgentAdmin.objects.filter(
+                    user=user
+                )
+
+                if user_associated_agent.exists():
+                    raise Exception(
+                        "Unable to complete. User is asscociated with other agent!"
+                    )
                 # GET USER GROUP
                 user_group = Group.objects.get(name=USER_GROUP_AGENT)
 
@@ -131,9 +139,9 @@ class AgentCreateSerializer(ModelSerializer):
                 )
 
                 # SEND NEW AGENT ADDED EMAIL
-                # send_welcome_email_to_new_agent.delay(
-                #     agent_branch=branch.id,
-                # )
+                send_welcome_email_to_new_agent.delay(
+                    agent_branch=branch.id,
+                )
 
                 # CHECK AGENT MODEL POST SAVE SIGNAL RECIEVER METHOD FOR REFERRAL CREATION
 
@@ -219,9 +227,9 @@ class AgentBranchSerializer(ModelSerializer):
                 )
 
                 # SEND NEW AGENT ADDED EMAIL
-                # send_new_agent_branch_added_email_to_agent.delay(
-                #     agent_branch=agent_branch.id,
-                # )
+                send_new_agent_branch_added_email_to_agent.delay(
+                    agent_branch=agent_branch.id,
+                )
 
                 return agent_branch
             except Exception as e:

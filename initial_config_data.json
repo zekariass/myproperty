@@ -1,0 +1,1810 @@
+[
+{
+  "model": "system.system",
+  "pk": 1,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-25T17:27:14Z",
+    "name": "*"
+  }
+},
+{
+  "model": "system.system",
+  "pk": 2,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-25T17:27:26Z",
+    "name": "MYPROPERTY"
+  }
+},
+{
+  "model": "system.currency",
+  "pk": 1,
+  "fields": {
+    "added_on": "2023-08-26T20:33:38Z",
+    "system": 1,
+    "name": "Ethiopian Birr",
+    "iso_4217_alpha_code": "ETB",
+    "iso_4217_num_code": "231",
+    "is_default": true,
+    "exchange_rate": "0.00000"
+  }
+},
+{
+  "model": "system.featuringprice",
+  "pk": 1,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:07:26Z",
+    "system": 2,
+    "price": "25.00000"
+  }
+},
+{
+  "model": "system.notificationtopic",
+  "pk": 1,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-25T17:27:40Z",
+    "system": 2,
+    "name": "NEW_AGENT_ADDED",
+    "target_group": "AGENT"
+  }
+},
+{
+  "model": "system.notificationtopic",
+  "pk": 2,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:08:15Z",
+    "system": 2,
+    "name": "NEW_AGENT_BRANCH_ADDED",
+    "target_group": "AGENT"
+  }
+},
+{
+  "model": "system.notificationtopic",
+  "pk": 3,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:08:40Z",
+    "system": 2,
+    "name": "NEW_PROPERTY_ADDED",
+    "target_group": "AGENT"
+  }
+},
+{
+  "model": "system.notificationtopic",
+  "pk": 4,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:08:52Z",
+    "system": 2,
+    "name": "NEW_LISTING_ADDED",
+    "target_group": "AGENT"
+  }
+},
+{
+  "model": "system.notificationtopic",
+  "pk": 5,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:09:01Z",
+    "system": 2,
+    "name": "PAYMENT_ORDER_REQUESTED",
+    "target_group": "AGENT"
+  }
+},
+{
+  "model": "system.notificationtopic",
+  "pk": 6,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:09:35Z",
+    "system": 2,
+    "name": "PAYMENT_ORDER_APPROVED",
+    "target_group": "AGENT"
+  }
+},
+{
+  "model": "system.notificationtopic",
+  "pk": 7,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:09:45Z",
+    "system": 2,
+    "name": "NEW_AGENT_SERVICE_SUBSCRIPTION",
+    "target_group": "AGENT"
+  }
+},
+{
+  "model": "system.notificationtopic",
+  "pk": 8,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:09:57Z",
+    "system": 2,
+    "name": "MARKETING",
+    "target_group": "AGENT"
+  }
+},
+{
+  "model": "system.notificationtopic",
+  "pk": 9,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:10:10Z",
+    "system": 2,
+    "name": "LISTING_VIEWED",
+    "target_group": "AGENT"
+  }
+},
+{
+  "model": "system.notificationtopic",
+  "pk": 10,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:12:00Z",
+    "system": 2,
+    "name": "REFERRER_COUPON",
+    "target_group": "AGENT"
+  }
+},
+{
+  "model": "system.notificationtopic",
+  "pk": 11,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:12:15Z",
+    "system": 2,
+    "name": "REFEREE_COUPON",
+    "target_group": "AGENT"
+  }
+},
+{
+  "model": "system.notificationtopic",
+  "pk": 12,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-27T10:57:50Z",
+    "system": 1,
+    "name": "PASSWORD_RESET_LINK",
+    "target_group": "USER"
+  }
+},
+{
+  "model": "system.notificationtopic",
+  "pk": 13,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-27T10:58:12Z",
+    "system": 1,
+    "name": "PASSWORD_CHANGE_CONFIRMATION",
+    "target_group": "USER"
+  }
+},
+{
+  "model": "system.listingparameter",
+  "pk": 1,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:13:06Z",
+    "system": 1,
+    "name": "*",
+    "value": "",
+    "is_active": true
+  }
+},
+{
+  "model": "system.listingparameter",
+  "pk": 2,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:21:34Z",
+    "system": 2,
+    "name": "AGENT_REFERRAL_COUPON_MAX_USE",
+    "value": "3",
+    "is_active": true
+  }
+},
+{
+  "model": "system.listingparameter",
+  "pk": 3,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:22:04Z",
+    "system": 2,
+    "name": "LISTING_LIFE_TIME",
+    "value": "5",
+    "is_active": true
+  }
+},
+{
+  "model": "system.listingparameter",
+  "pk": 4,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:23:55Z",
+    "system": 2,
+    "name": "NEW_AGENT_GRACE_PERIOD",
+    "value": "30",
+    "is_active": true
+  }
+},
+{
+  "model": "system.listingparameter",
+  "pk": 5,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:24:34Z",
+    "system": 2,
+    "name": "LOYALTY_DISCOUNT_PRESUBSCRIPTIONS",
+    "value": "5",
+    "is_active": true
+  }
+},
+{
+  "model": "system.listingparameter",
+  "pk": 6,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:24:46Z",
+    "system": 2,
+    "name": "RESUBSCRIPTION_GRACE_PERIOD",
+    "value": "30",
+    "is_active": true
+  }
+},
+{
+  "model": "system.listingparameter",
+  "pk": 7,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:24:58Z",
+    "system": 2,
+    "name": "DISCOUNT_TRACKER_LIFETIME",
+    "value": "30",
+    "is_active": true
+  }
+},
+{
+  "model": "system.discount",
+  "pk": 1,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:53:43Z",
+    "start_on": "2023-08-26T20:53:43Z",
+    "expire_on": "2026-06-19T20:53:43Z",
+    "name": "NEW_AGENT_DISCOUNT",
+    "action": "COUNT",
+    "unit": "DAY",
+    "value": 2,
+    "discount_percentage_value": "20.00",
+    "discount_fixed_value": "10.00",
+    "payment_type": "PAY_PER_LISTING",
+    "is_active": true,
+    "is_trackable": true
+  }
+},
+{
+  "model": "system.discount",
+  "pk": 2,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:56:43Z",
+    "start_on": "2023-08-26T20:56:43Z",
+    "expire_on": "2026-08-26T20:56:43Z",
+    "name": "NEW_AGENT_DISCOUNT",
+    "action": "SINGLE",
+    "unit": "NONE",
+    "value": 1,
+    "discount_percentage_value": "20.00",
+    "discount_fixed_value": "20.00",
+    "payment_type": "SUBSCRIPTION",
+    "is_active": true,
+    "is_trackable": false
+  }
+},
+{
+  "model": "system.discount",
+  "pk": 3,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:58:39Z",
+    "start_on": "2023-08-26T20:58:39Z",
+    "expire_on": "2026-08-26T20:58:39Z",
+    "name": "SUBSCRIPTION_RENEWAL_DISCOUNT",
+    "action": "SINGLE",
+    "unit": "NONE",
+    "value": 1,
+    "discount_percentage_value": "10.00",
+    "discount_fixed_value": "10.00",
+    "payment_type": "SUBSCRIPTION",
+    "is_active": true,
+    "is_trackable": false
+  }
+},
+{
+  "model": "system.discount",
+  "pk": 4,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:59:32Z",
+    "start_on": "2023-08-26T20:59:32Z",
+    "expire_on": "2024-08-26T20:59:32Z",
+    "name": "SEASONAL_DISCOUNT",
+    "action": "COUNT",
+    "unit": "LISTING",
+    "value": 2,
+    "discount_percentage_value": "10.00",
+    "discount_fixed_value": "0.00",
+    "payment_type": "PAY_PER_LISTING",
+    "is_active": true,
+    "is_trackable": true
+  }
+},
+{
+  "model": "system.discount",
+  "pk": 5,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:00:34Z",
+    "start_on": "2023-08-26T21:00:34Z",
+    "expire_on": "2029-08-26T21:00:34Z",
+    "name": "LOYALTY_DISCOUNT",
+    "action": "SINGLE",
+    "unit": "NONE",
+    "value": 1,
+    "discount_percentage_value": "5.00",
+    "discount_fixed_value": "0.00",
+    "payment_type": "SUBSCRIPTION",
+    "is_active": true,
+    "is_trackable": false
+  }
+},
+{
+  "model": "system.paymentmethod",
+  "pk": 1,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:27:21Z",
+    "system": 1,
+    "name": "CARD",
+    "approval_mode": "AUTO"
+  }
+},
+{
+  "model": "system.paymentmethod",
+  "pk": 2,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:27:37Z",
+    "system": 1,
+    "name": "VOUCHER",
+    "approval_mode": "AUTO"
+  }
+},
+{
+  "model": "system.paymentmethod",
+  "pk": 3,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:27:49Z",
+    "system": 1,
+    "name": "MOBILE_PAYMENT",
+    "approval_mode": "AUTO"
+  }
+},
+{
+  "model": "system.paymentmethod",
+  "pk": 4,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:28:04Z",
+    "system": 1,
+    "name": "BANK_TRANSFER",
+    "approval_mode": "MANUAL"
+  }
+},
+{
+  "model": "system.paymentmethoddiscount",
+  "pk": 1,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:28:45Z",
+    "start_on": "2023-08-26T21:28:45Z",
+    "expire_on": "2028-08-26T21:28:45Z",
+    "payment_method": 1,
+    "discount_percentage_value": "5.00",
+    "discount_fixed_value": "0.00"
+  }
+},
+{
+  "model": "system.paymentmethoddiscount",
+  "pk": 2,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:29:11Z",
+    "start_on": "2023-08-26T21:29:11Z",
+    "expire_on": "2028-08-26T21:29:11Z",
+    "payment_method": 3,
+    "discount_percentage_value": "5.00",
+    "discount_fixed_value": "0.00"
+  }
+},
+{
+  "model": "system.paymentmethoddiscount",
+  "pk": 3,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:29:21Z",
+    "start_on": "2023-08-26T21:29:21Z",
+    "expire_on": "2028-08-26T21:29:21Z",
+    "payment_method": 2,
+    "discount_percentage_value": "5.00",
+    "discount_fixed_value": "0.00"
+  }
+},
+{
+  "model": "system.periodicity",
+  "pk": 1,
+  "fields": {
+    "added_on": "2023-08-26T21:31:12Z",
+    "system": 1,
+    "name": "DAY",
+    "length": 1,
+    "length_unit": "DAY"
+  }
+},
+{
+  "model": "system.periodicity",
+  "pk": 2,
+  "fields": {
+    "added_on": "2023-08-26T21:31:32Z",
+    "system": 1,
+    "name": "WEEK",
+    "length": 7,
+    "length_unit": "DAY"
+  }
+},
+{
+  "model": "system.periodicity",
+  "pk": 3,
+  "fields": {
+    "added_on": "2023-08-26T21:31:48Z",
+    "system": 1,
+    "name": "MONTH",
+    "length": 30,
+    "length_unit": "DAY"
+  }
+},
+{
+  "model": "system.periodicity",
+  "pk": 4,
+  "fields": {
+    "added_on": "2023-08-26T21:32:02Z",
+    "system": 1,
+    "name": "YEAR",
+    "length": 365,
+    "length_unit": "DAY"
+  }
+},
+{
+  "model": "system.referralrewardplan",
+  "pk": 1,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:33:05Z",
+    "start_on": "2023-08-26T21:33:05Z",
+    "expire_on": "2029-08-26T21:33:05Z",
+    "system": 2,
+    "name": "Agent Referral Reward Plan",
+    "referrer_reward_percentage_value": "5.00",
+    "referrer_reward_fixed_value": "15.00",
+    "referee_reward_percentage_value": "5.00",
+    "referee_reward_fixed_value": "5.00",
+    "number_of_referrals_needed": 1
+  }
+},
+{
+  "model": "system.servicesubscriptionplan",
+  "pk": 1,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:35:41Z",
+    "name": "AGENT_MONTHLY_BILLED_MONTHLY",
+    "system": 2,
+    "subscription_price": "300.00000",
+    "subscription_period": 3,
+    "subscription_period_length": 1,
+    "billing_cycle": 3,
+    "billing_cycle_length": 1,
+    "base_number_of_branches": 1,
+    "price_increase_by_branch_percentage_value": "0.00",
+    "price_increase_by_branch_fixed_value": "25.00"
+  }
+},
+{
+  "model": "system.servicesubscriptionplan",
+  "pk": 2,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:39:37Z",
+    "name": "AGENT_MONTHLY_BILLED_QUARTERLY",
+    "system": 2,
+    "subscription_price": "275.00000",
+    "subscription_period": 3,
+    "subscription_period_length": 1,
+    "billing_cycle": 3,
+    "billing_cycle_length": 3,
+    "base_number_of_branches": 1,
+    "price_increase_by_branch_percentage_value": "0.00",
+    "price_increase_by_branch_fixed_value": "20.00"
+  }
+},
+{
+  "model": "system.servicesubscriptionplan",
+  "pk": 3,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:40:43Z",
+    "name": "AGENT_MONTHLY_BILLED_SEMI_ANUALLY",
+    "system": 2,
+    "subscription_price": "250.00000",
+    "subscription_period": 3,
+    "subscription_period_length": 1,
+    "billing_cycle": 3,
+    "billing_cycle_length": 6,
+    "base_number_of_branches": 1,
+    "price_increase_by_branch_percentage_value": "0.00",
+    "price_increase_by_branch_fixed_value": "15.00"
+  }
+},
+{
+  "model": "system.servicesubscriptionplan",
+  "pk": 4,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:41:33Z",
+    "name": "AGENT_MONTHLY_BILLED_YEARLY",
+    "system": 2,
+    "subscription_price": "225.00000",
+    "subscription_period": 3,
+    "subscription_period_length": 1,
+    "billing_cycle": 4,
+    "billing_cycle_length": 1,
+    "base_number_of_branches": 1,
+    "price_increase_by_branch_percentage_value": "0.00",
+    "price_increase_by_branch_fixed_value": "10.00"
+  }
+},
+{
+  "model": "system.supportedcardscheme",
+  "pk": 1,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:46:02Z",
+    "system": 1,
+    "name": "VISA",
+    "BIN": "4"
+  }
+},
+{
+  "model": "system.supportedcardscheme",
+  "pk": 2,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:49:25Z",
+    "system": 1,
+    "name": "MASTERCARD",
+    "BIN": "5"
+  }
+},
+{
+  "model": "system.systemparameter",
+  "pk": 1,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:52:34Z",
+    "system": 2,
+    "name": "VOUCHER_LIFE_TIME",
+    "value": "365"
+  }
+},
+{
+  "model": "system.systemparameter",
+  "pk": 2,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T21:53:10Z",
+    "system": 2,
+    "name": "COUPON_LIFE_TIME",
+    "value": "365"
+  }
+},
+{
+  "model": "system.systemparameter",
+  "pk": 3,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-27T10:57:16Z",
+    "system": 1,
+    "name": "PASSWORD_RESET_TOKEN_LIFETIME",
+    "value": "300"
+  }
+},
+{
+  "model": "commons.country",
+  "pk": 1,
+  "fields": {
+    "added_on": "2023-08-24T21:48:30Z",
+    "name": "Ethiopia",
+    "iso_3166_code": "231",
+    "latitute": "",
+    "longitude": ""
+  }
+},
+{
+  "model": "auth.group",
+  "pk": 1,
+  "fields": {
+    "name": "AGENT",
+    "permissions": []
+  }
+},
+{
+  "model": "auth.group",
+  "pk": 2,
+  "fields": {
+    "name": "ANY",
+    "permissions": []
+  }
+},
+{
+  "model": "auth.group",
+  "pk": 3,
+  "fields": {
+    "name": "ADMIN",
+    "permissions": []
+  }
+},
+{
+  "model": "properties.amenitycategory",
+  "pk": 1,
+  "fields": {
+    "description": "Cleaning",
+    "added_on": "2023-08-26T19:56:19.533Z",
+    "name": "Cleaning"
+  }
+},
+{
+  "model": "properties.amenitycategory",
+  "pk": 2,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:03:43Z",
+    "name": "Entertainment"
+  }
+},
+{
+  "model": "properties.amenitycategory",
+  "pk": 3,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:04:00Z",
+    "name": "Community"
+  }
+},
+{
+  "model": "properties.amenitycategory",
+  "pk": 4,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:04:21Z",
+    "name": "Kitchen"
+  }
+},
+{
+  "model": "properties.amenitycategory",
+  "pk": 5,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:05:59Z",
+    "name": "Bathroom Amenities"
+  }
+},
+{
+  "model": "properties.amenitycategory",
+  "pk": 6,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:06:18Z",
+    "name": "Living and Dining Amenities"
+  }
+},
+{
+  "model": "properties.amenitycategory",
+  "pk": 7,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:06:29Z",
+    "name": "Bedroom Amenities"
+  }
+},
+{
+  "model": "properties.amenitycategory",
+  "pk": 8,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:06:41Z",
+    "name": "Outdoor Amenities"
+  }
+},
+{
+  "model": "properties.amenitycategory",
+  "pk": 9,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:06:51Z",
+    "name": "Fitness and Recreation Amenities"
+  }
+},
+{
+  "model": "properties.amenitycategory",
+  "pk": 10,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:07:28Z",
+    "name": "Utility and Convenience Amenities"
+  }
+},
+{
+  "model": "properties.amenitycategory",
+  "pk": 11,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:07:37Z",
+    "name": "Accessibility Amenities"
+  }
+},
+{
+  "model": "properties.amenitycategory",
+  "pk": 12,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:07:59Z",
+    "name": "Pet-Friendly Amenities"
+  }
+},
+{
+  "model": "properties.amenitycategory",
+  "pk": 13,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:08:44Z",
+    "name": "Security Amenities"
+  }
+},
+{
+  "model": "properties.amenitycategory",
+  "pk": 14,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:08:59Z",
+    "name": "Environmental Amenities"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 1,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:09:31Z",
+    "category": 4,
+    "name": "Fully equipped kitchen"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 2,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:10:17Z",
+    "category": 4,
+    "name": "oven"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 3,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:10:41Z",
+    "category": 4,
+    "name": "refrigerator"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 4,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:10:51Z",
+    "category": 4,
+    "name": "dishwasher"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 5,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:11:01Z",
+    "category": 4,
+    "name": "Granite countertops"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 6,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:11:31Z",
+    "category": 4,
+    "name": "Breakfast bar"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 7,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:11:42Z",
+    "category": 5,
+    "name": "Master bath"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 8,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:12:00Z",
+    "category": 5,
+    "name": "Jacuzzi tub"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 9,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:12:12Z",
+    "category": 5,
+    "name": "Double sinks"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 10,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:12:26Z",
+    "category": 5,
+    "name": "Walk-in shower"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 11,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:12:42Z",
+    "category": 6,
+    "name": "Open floor plan"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 12,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:12:55Z",
+    "category": 6,
+    "name": "Fireplace"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 13,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:13:04Z",
+    "category": 6,
+    "name": "Formal dining room"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 14,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:13:23Z",
+    "category": 6,
+    "name": "Vaulted ceilings"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 15,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:13:34Z",
+    "category": 7,
+    "name": "Walk-in closet"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 16,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:13:54Z",
+    "category": 7,
+    "name": "Ensuite bathroom"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 17,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:14:06Z",
+    "category": 7,
+    "name": "Balcony or patio access"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 18,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:14:19Z",
+    "category": 8,
+    "name": "Swimming pool"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 19,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:14:46Z",
+    "category": 8,
+    "name": "Deck or patio"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 20,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:14:57Z",
+    "category": 8,
+    "name": "Garden or backyard"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 21,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:15:07Z",
+    "category": 8,
+    "name": "BBQ area"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 22,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:15:16Z",
+    "category": 2,
+    "name": "Home theater"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 23,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:15:36Z",
+    "category": 2,
+    "name": "High-speed internet"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 24,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:15:45Z",
+    "category": 2,
+    "name": "Cable or satellite TV"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 25,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:16:13Z",
+    "category": 2,
+    "name": "Smart home features (smart thermostat, security system, etc.)"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 26,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:16:32Z",
+    "category": 9,
+    "name": "Gym or fitness center"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 27,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:16:48Z",
+    "category": 9,
+    "name": "Tennis court"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 28,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:17:01Z",
+    "category": 9,
+    "name": "Playground"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 29,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:17:14Z",
+    "category": 10,
+    "name": "Laundry room or washer/dryer"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 30,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:17:34Z",
+    "category": 10,
+    "name": "Central air conditioning"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 31,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:17:46Z",
+    "category": 10,
+    "name": "Garage or covered parking"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 32,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:17:57Z",
+    "category": 10,
+    "name": "Elevator"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 33,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:18:09Z",
+    "category": 11,
+    "name": "Wheelchair accessibility"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 34,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:18:22Z",
+    "category": 10,
+    "name": "Ramps and handrails"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 35,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:18:40Z",
+    "category": 12,
+    "name": "Fenced yard"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 36,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:18:55Z",
+    "category": 12,
+    "name": "Pet door"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 37,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:19:11Z",
+    "category": 12,
+    "name": "Pet grooming station"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 38,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:19:27Z",
+    "category": 13,
+    "name": "Gated community"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 39,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:19:53Z",
+    "category": 13,
+    "name": "Security personnel"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 40,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:20:04Z",
+    "category": 13,
+    "name": "Surveillance cameras"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 41,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:20:14Z",
+    "category": 14,
+    "name": "Energy-efficient appliances"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 42,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:20:28Z",
+    "category": 14,
+    "name": "Solar panels"
+  }
+},
+{
+  "model": "properties.amenity",
+  "pk": 43,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:20:40Z",
+    "category": 14,
+    "name": "Rainwater harvesting system"
+  }
+},
+{
+  "model": "properties.propertycategory",
+  "pk": 1,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:22:09Z",
+    "name": "Apartment",
+    "cat_key": "PROPCAT001"
+  }
+},
+{
+  "model": "properties.propertycategory",
+  "pk": 2,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:22:22Z",
+    "name": "Condominium",
+    "cat_key": "PROPCAT002"
+  }
+},
+{
+  "model": "properties.propertycategory",
+  "pk": 3,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:22:32Z",
+    "name": "Townhouse",
+    "cat_key": "PROPCAT003"
+  }
+},
+{
+  "model": "properties.propertycategory",
+  "pk": 4,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:22:46Z",
+    "name": "Villa",
+    "cat_key": "PROPCAT004"
+  }
+},
+{
+  "model": "properties.propertycategory",
+  "pk": 5,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:22:53Z",
+    "name": "Sharehouse",
+    "cat_key": "PROPCAT005"
+  }
+},
+{
+  "model": "properties.propertycategory",
+  "pk": 6,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:23:03Z",
+    "name": "Commercial Property",
+    "cat_key": "PROPCAT006"
+  }
+},
+{
+  "model": "properties.propertycategory",
+  "pk": 7,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:25:06Z",
+    "name": "Venue",
+    "cat_key": "PROPCAT007"
+  }
+},
+{
+  "model": "properties.propertycategory",
+  "pk": 8,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:25:16Z",
+    "name": "Land",
+    "cat_key": "PROPCAT008"
+  }
+},
+{
+  "model": "properties.buildingtype",
+  "pk": 1,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:26:11Z",
+    "type": "APARTMENT"
+  }
+},
+{
+  "model": "properties.buildingtype",
+  "pk": 2,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:26:26Z",
+    "type": "CONDOMINIUM"
+  }
+},
+{
+  "model": "properties.buildingtype",
+  "pk": 3,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:26:30Z",
+    "type": "TOWNHOUSE"
+  }
+},
+{
+  "model": "properties.buildingtype",
+  "pk": 4,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:26:34Z",
+    "type": "VILLA"
+  }
+},
+{
+  "model": "properties.buildingtype",
+  "pk": 5,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:26:39Z",
+    "type": "OTHER"
+  }
+},
+{
+  "model": "properties.landtype",
+  "pk": 1,
+  "fields": {
+    "description": "Land designated for housing and residential purposes. Typically includes single-family homes, apartments, condominiums, and townhouses.",
+    "added_on": "2023-08-26T20:27:27Z",
+    "name": "Residential Land"
+  }
+},
+{
+  "model": "properties.landtype",
+  "pk": 2,
+  "fields": {
+    "description": "Land used for business and commercial activities. Includes office buildings, shopping centers, hotels, and restaurants.",
+    "added_on": "2023-08-26T20:28:14Z",
+    "name": "Commercial Land"
+  }
+},
+{
+  "model": "properties.landtype",
+  "pk": 3,
+  "fields": {
+    "description": "Land designated for manufacturing, warehousing, and industrial activities. Often zoned for heavy or light industrial use.",
+    "added_on": "2023-08-26T20:28:40Z",
+    "name": "Industrial Land"
+  }
+},
+{
+  "model": "properties.landtype",
+  "pk": 4,
+  "fields": {
+    "description": "Land used for farming, agriculture, and the cultivation of crops and livestock. May include crop fields, orchards, vineyards, and ranches.",
+    "added_on": "2023-08-26T20:29:04Z",
+    "name": "Agricultural Land"
+  }
+},
+{
+  "model": "properties.landtype",
+  "pk": 5,
+  "fields": {
+    "description": "Land located in rural areas, often with low population density. Can be used for various purposes, including agriculture, recreation, and conservation.",
+    "added_on": "2023-08-26T20:29:30Z",
+    "name": "Rural Land"
+  }
+},
+{
+  "model": "properties.landtype",
+  "pk": 6,
+  "fields": {
+    "description": "Land zoned for both commercial and residential purposes. Often found in urban areas with a mix of businesses and housing.",
+    "added_on": "2023-08-26T20:30:05Z",
+    "name": "Commercial-Residential Mixed-Use Land"
+  }
+},
+{
+  "model": "properties.landtype",
+  "pk": 7,
+  "fields": {
+    "description": "Land used for recreational activities, such as parks, sports fields, and outdoor entertainment.",
+    "added_on": "2023-08-26T20:30:38Z",
+    "name": "Recreational Land"
+  }
+},
+{
+  "model": "properties.landtype",
+  "pk": 8,
+  "fields": {
+    "description": "Land preserved for environmental conservation and protection of natural habitats. Includes national parks, wildlife reserves, and protected areas.",
+    "added_on": "2023-08-26T20:31:01Z",
+    "name": "Conservation Land"
+  }
+},
+{
+  "model": "properties.listingpricebypropertycategory",
+  "pk": 1,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:36:50Z",
+    "property_category": 1,
+    "listing_type": "RENT",
+    "price_percentage": "10.00000",
+    "price_fixed": "10.00000",
+    "price_lower_bound": "10.00000",
+    "price_upper_bound": "1000.00000"
+  }
+},
+{
+  "model": "properties.listingpricebypropertycategory",
+  "pk": 2,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:37:26Z",
+    "property_category": 1,
+    "listing_type": "SALE",
+    "price_percentage": "20.00000",
+    "price_fixed": "200.00000",
+    "price_lower_bound": "200.00000",
+    "price_upper_bound": "2000.00000"
+  }
+},
+{
+  "model": "properties.listingpricebypropertycategory",
+  "pk": 3,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:37:54Z",
+    "property_category": 2,
+    "listing_type": "RENT",
+    "price_percentage": "10.00000",
+    "price_fixed": "10.00000",
+    "price_lower_bound": "10.00000",
+    "price_upper_bound": "100.00000"
+  }
+},
+{
+  "model": "properties.listingpricebypropertycategory",
+  "pk": 4,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:38:39Z",
+    "property_category": 2,
+    "listing_type": "SALE",
+    "price_percentage": "20.00000",
+    "price_fixed": "20.00000",
+    "price_lower_bound": "20.00000",
+    "price_upper_bound": "2000.00000"
+  }
+},
+{
+  "model": "properties.listingpricebypropertycategory",
+  "pk": 5,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:39:43Z",
+    "property_category": 3,
+    "listing_type": "RENT",
+    "price_percentage": "10.00000",
+    "price_fixed": "10.00000",
+    "price_lower_bound": "10.00000",
+    "price_upper_bound": "100.00000"
+  }
+},
+{
+  "model": "properties.listingpricebypropertycategory",
+  "pk": 6,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:40:03Z",
+    "property_category": 3,
+    "listing_type": "SALE",
+    "price_percentage": "20.00000",
+    "price_fixed": "20.00000",
+    "price_lower_bound": "20.00000",
+    "price_upper_bound": "2000.00000"
+  }
+},
+{
+  "model": "properties.listingpricebypropertycategory",
+  "pk": 7,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:40:33Z",
+    "property_category": 4,
+    "listing_type": "RENT",
+    "price_percentage": "10.00000",
+    "price_fixed": "10.00000",
+    "price_lower_bound": "10.00000",
+    "price_upper_bound": "100.00000"
+  }
+},
+{
+  "model": "properties.listingpricebypropertycategory",
+  "pk": 8,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:40:52Z",
+    "property_category": 4,
+    "listing_type": "SALE",
+    "price_percentage": "20.00000",
+    "price_fixed": "20.00000",
+    "price_lower_bound": "20.00000",
+    "price_upper_bound": "2000.00000"
+  }
+},
+{
+  "model": "properties.listingpricebypropertycategory",
+  "pk": 9,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:42:02Z",
+    "property_category": 5,
+    "listing_type": "RENT",
+    "price_percentage": "10.00000",
+    "price_fixed": "10.00000",
+    "price_lower_bound": "10.00000",
+    "price_upper_bound": "100.00000"
+  }
+},
+{
+  "model": "properties.listingpricebypropertycategory",
+  "pk": 10,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:42:21Z",
+    "property_category": 5,
+    "listing_type": "SALE",
+    "price_percentage": "20.00000",
+    "price_fixed": "20.00000",
+    "price_lower_bound": "20.00000",
+    "price_upper_bound": "2000.00000"
+  }
+},
+{
+  "model": "properties.listingpricebypropertycategory",
+  "pk": 11,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:43:33Z",
+    "property_category": 6,
+    "listing_type": "RENT",
+    "price_percentage": "10.00000",
+    "price_fixed": "10.00000",
+    "price_lower_bound": "10.00000",
+    "price_upper_bound": "100.00000"
+  }
+},
+{
+  "model": "properties.listingpricebypropertycategory",
+  "pk": 12,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:43:52Z",
+    "property_category": 6,
+    "listing_type": "SALE",
+    "price_percentage": "19.99995",
+    "price_fixed": "20.00000",
+    "price_lower_bound": "20.00000",
+    "price_upper_bound": "2000.00000"
+  }
+},
+{
+  "model": "properties.listingpricebypropertycategory",
+  "pk": 13,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:44:45Z",
+    "property_category": 7,
+    "listing_type": "RENT",
+    "price_percentage": "10.00000",
+    "price_fixed": "10.00000",
+    "price_lower_bound": "10.00000",
+    "price_upper_bound": "100.00000"
+  }
+},
+{
+  "model": "properties.listingpricebypropertycategory",
+  "pk": 14,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:45:07Z",
+    "property_category": 7,
+    "listing_type": "SALE",
+    "price_percentage": "20.00000",
+    "price_fixed": "20.00000",
+    "price_lower_bound": "20.00000",
+    "price_upper_bound": "2000.00000"
+  }
+},
+{
+  "model": "properties.listingpricebypropertycategory",
+  "pk": 15,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:45:24Z",
+    "property_category": 8,
+    "listing_type": "RENT",
+    "price_percentage": "10.00000",
+    "price_fixed": "10.00000",
+    "price_lower_bound": "10.00000",
+    "price_upper_bound": "100.00000"
+  }
+},
+{
+  "model": "properties.listingpricebypropertycategory",
+  "pk": 16,
+  "fields": {
+    "description": "",
+    "added_on": "2023-08-26T20:45:48Z",
+    "property_category": 8,
+    "listing_type": "SALE",
+    "price_percentage": "20.00000",
+    "price_fixed": "20.00000",
+    "price_lower_bound": "20.00000",
+    "price_upper_bound": "2000.00000"
+  }
+},
+{
+  "model": "properties.propertyimagelabel",
+  "pk": 1,
+  "fields": {
+    "description": "A space for relaxation, socializing, and entertaining guests. Often includes seating, a coffee table, and entertainment equipment.",
+    "added_on": "2023-08-26T20:47:36Z",
+    "name": "Living Room (Lounge)"
+  }
+},
+{
+  "model": "properties.propertyimagelabel",
+  "pk": 2,
+  "fields": {
+    "description": "A designated area for dining and formal meals. Typically contains a dining table and chairs.",
+    "added_on": "2023-08-26T20:48:12Z",
+    "name": "Dining Room"
+  }
+},
+{
+  "model": "properties.propertyimagelabel",
+  "pk": 3,
+  "fields": {
+    "description": "Where food preparation and cooking take place. Equipped with appliances, countertops, and storage.",
+    "added_on": "2023-08-26T20:48:33Z",
+    "name": "Kitchen"
+  }
+},
+{
+  "model": "properties.propertyimagelabel",
+  "pk": 4,
+  "fields": {
+    "description": "Private sleeping quarters. Each bedroom may contain a bed, wardrobe, and other furnishings.",
+    "added_on": "2023-08-26T20:48:51Z",
+    "name": "Bedrooms"
+  }
+},
+{
+  "model": "properties.propertyimagelabel",
+  "pk": 5,
+  "fields": {
+    "description": "Spaces for personal hygiene, including toilets, sinks, and showers or bathtubs. May include half-baths (powder rooms) for guests.",
+    "added_on": "2023-08-26T20:49:09Z",
+    "name": "Bathrooms"
+  }
+},
+{
+  "model": "properties.propertyimagelabel",
+  "pk": 6,
+  "fields": {
+    "description": "A room for working, studying, or conducting business. Contains a desk, chair, and possibly bookshelves.",
+    "added_on": "2023-08-26T20:49:24Z",
+    "name": "Home Office or Study"
+  }
+},
+{
+  "model": "properties.propertyimagelabel",
+  "pk": 7,
+  "fields": {
+    "description": "An informal gathering space for family activities. Often includes comfortable seating and entertainment options.",
+    "added_on": "2023-08-26T20:49:40Z",
+    "name": "Family Room or Den"
+  }
+},
+{
+  "model": "properties.propertyimagelabel",
+  "pk": 8,
+  "fields": {
+    "description": "A utility area for washing and drying clothes. Contains washing machines, dryers, and storage.",
+    "added_on": "2023-08-26T20:49:58Z",
+    "name": "Laundry Room"
+  }
+},
+{
+  "model": "properties.propertyimagelabel",
+  "pk": 9,
+  "fields": {
+    "description": "An entryway for removing and storing outdoor clothing and footwear. May have hooks, shelves, and benches.",
+    "added_on": "2023-08-26T20:50:21Z",
+    "name": "Mudroom"
+  }
+},
+{
+  "model": "properties.propertyimagelabel",
+  "pk": 10,
+  "fields": {
+    "description": "An underground area used for storage, recreation, or additional living space.",
+    "added_on": "2023-08-26T20:50:38Z",
+    "name": "Basement"
+  }
+},
+{
+  "model": "properties.propertyimagelabel",
+  "pk": 11,
+  "fields": {
+    "description": "A space at the top of the house often used for storage or conversion into living space.",
+    "added_on": "2023-08-26T20:50:51Z",
+    "name": "Attic"
+  }
+},
+{
+  "model": "properties.propertyimagelabel",
+  "pk": 12,
+  "fields": {
+    "description": "A sheltered area for vehicle parking and storage. May also include space for tools and equipment.",
+    "added_on": "2023-08-26T20:51:10Z",
+    "name": "Garage"
+  }
+},
+{
+  "model": "properties.propertyimagelabel",
+  "pk": 13,
+  "fields": {
+    "description": "A small room or closet for storing food and kitchen supplies.",
+    "added_on": "2023-08-26T20:51:27Z",
+    "name": "Pantry"
+  }
+},
+{
+  "model": "properties.propertyimagelabel",
+  "pk": 14,
+  "fields": {
+    "description": "Built-in storage spaces for clothes, linens, and household items. Walk-in closets are larger and provide more storage space.",
+    "added_on": "2023-08-26T20:51:42Z",
+    "name": "Closets"
+  }
+},
+{
+  "model": "properties.propertyimagelabel",
+  "pk": 15,
+  "fields": {
+    "description": "Connect various compartments within the house. May include closets or built-in storage.",
+    "added_on": "2023-08-26T20:51:57Z",
+    "name": "Hallways and Corridors"
+  }
+},
+{
+  "model": "properties.propertyimagelabel",
+  "pk": 16,
+  "fields": {
+    "description": "A spare bedroom for accommodating visitors.",
+    "added_on": "2023-08-26T20:52:16Z",
+    "name": "Guest Room"
+  }
+},
+{
+  "model": "properties.propertyimagelabel",
+  "pk": 17,
+  "fields": {
+    "description": "A room with large windows for enjoying natural light and indoor plants",
+    "added_on": "2023-08-26T20:52:31Z",
+    "name": "Sunroom or Conservatory"
+  }
+},
+{
+  "model": "properties.propertyimagelabel",
+  "pk": 18,
+  "fields": {
+    "description": "A dedicated space for watching movies and television with high-quality audio and video equipment",
+    "added_on": "2023-08-26T20:52:48Z",
+    "name": "Home Theater"
+  }
+}
+]
