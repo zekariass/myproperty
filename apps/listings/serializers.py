@@ -4,6 +4,7 @@ from django.utils import timezone
 from apps.commons.models import Tag
 
 from apps.mixins import constants
+from apps.properties import serializers as prop_serializers
 
 from . import models as listing_models
 
@@ -22,7 +23,7 @@ class SaleListingSerializer(ModelSerializer):
         read_only_fields = ["listing"]
 
 
-class ListingSerializer(ModelSerializer):
+class BaseListingSerializer(ModelSerializer):
     listing_type_data = serializers.SerializerMethodField(read_only=True)
     is_expired = serializers.SerializerMethodField(read_only=True)
     is_approved = serializers.SerializerMethodField(read_only=True)
@@ -33,6 +34,7 @@ class ListingSerializer(ModelSerializer):
     property_category = serializers.CharField(
         read_only=True, source="main_property.property_category.cat_key"
     )
+    # main_property = prop_serializers.PropertyAnySerializer(read_only=True)
 
     class Meta:
         model = listing_models.Listing
@@ -128,9 +130,44 @@ class ListingSerializer(ModelSerializer):
         return listing_tags
 
 
+class ListingSerializer(BaseListingSerializer):
+    class Meta:
+        model = listing_models.Listing
+        fields = BaseListingSerializer.Meta.fields
+        read_only_fields = BaseListingSerializer.Meta.read_only_fields
+
+
+class ListingListSerializer(BaseListingSerializer):
+    main_property = prop_serializers.ListingPropertySerializer(read_only=True)
+
+    class Meta:
+        model = listing_models.Listing
+        fields = BaseListingSerializer.Meta.fields + ["main_property"]
+        read_only_fields = BaseListingSerializer.Meta.read_only_fields
+
+
 class ApartmentUnitListingSerializer(ModelSerializer):
     class Meta:
         model = listing_models.ApartmentUnitListing
+        fields = "__all__"
+        read_only_fields = ["listing"]
+
+
+class ApartmentUnitListingForListingDetailSerializer(ModelSerializer):
+    apartment_unit = prop_serializers.ApartmentUnitSerializer(read_only=True)
+    apartment = prop_serializers.ApartmentWithoutUnitsSerializer(read_only=True)
+
+    class Meta:
+        model = listing_models.ApartmentUnitListing
+        fields = "__all__"
+        read_only_fields = ["listing"]
+
+
+class CondominiumListingForListingDetailSerializer(ModelSerializer):
+    condominium = prop_serializers.CondominiumSerializer(read_only=True)
+
+    class Meta:
+        model = listing_models.CondominiumListing
         fields = "__all__"
         read_only_fields = ["listing"]
 
@@ -149,6 +186,15 @@ class VillaListingSerializer(ModelSerializer):
         read_only_fields = ["listing"]
 
 
+class VillaListingForListingDetailSerializer(ModelSerializer):
+    villa = prop_serializers.VillaSerializer(read_only=True)
+
+    class Meta:
+        model = listing_models.VillaListing
+        fields = "__all__"
+        read_only_fields = ["listing"]
+
+
 class TownhouseListingSerializer(ModelSerializer):
     class Meta:
         model = listing_models.TownhouseListing
@@ -156,7 +202,25 @@ class TownhouseListingSerializer(ModelSerializer):
         read_only_fields = ["listing"]
 
 
+class TownhouseListingForListingDetailSerializer(ModelSerializer):
+    townhouse = prop_serializers.TownhouseSerializer(read_only=True)
+
+    class Meta:
+        model = listing_models.TownhouseListing
+        fields = "__all__"
+        read_only_fields = ["listing"]
+
+
 class SharehouseListingSerializer(ModelSerializer):
+    class Meta:
+        model = listing_models.SharehouseListing
+        fields = "__all__"
+        read_only_fields = ["listing"]
+
+
+class SharehouseListingForListingDetailSerializer(ModelSerializer):
+    sharehouse = prop_serializers.SharehouseSerializer(read_only=True)
+
     class Meta:
         model = listing_models.SharehouseListing
         fields = "__all__"
@@ -177,7 +241,25 @@ class VenueListingSerializer(ModelSerializer):
         read_only_fields = ["listing"]
 
 
+class VenueListingForListingDetailSerializer(ModelSerializer):
+    venue = prop_serializers.VenueSerializer(read_only=True)
+
+    class Meta:
+        model = listing_models.VenueListing
+        fields = "__all__"
+        read_only_fields = ["listing"]
+
+
 class LandListingSerializer(ModelSerializer):
+    class Meta:
+        model = listing_models.LandListing
+        fields = "__all__"
+        read_only_fields = ["listing"]
+
+
+class LandListingForListingDetailSerializer(ModelSerializer):
+    land = prop_serializers.LandSerializer(read_only=True)
+
     class Meta:
         model = listing_models.LandListing
         fields = "__all__"
@@ -197,7 +279,33 @@ class OfficeListingSerializer(ModelSerializer):
         read_only_fields = ["listing"]
 
 
+class OfficeUnitListingForListingDetailSerializer(ModelSerializer):
+    office_unit = prop_serializers.OfficeUnitSerializer(read_only=True)
+    commercial_property = prop_serializers.CommercialPropertyWithoutUnitsSerializer(
+        read_only=True
+    )
+
+    class Meta:
+        model = listing_models.OfficeListing
+        fields = "__all__"
+        read_only_fields = ["listing"]
+
+
 class OtherCommercialPropertyUnitListingSerializer(ModelSerializer):
+    class Meta:
+        model = listing_models.OtherCommercialPropertyUnitListing
+        fields = "__all__"
+        read_only_fields = ["listing"]
+
+
+class OtherCommercialPropertyUnitListingForListingDetailSerializer(ModelSerializer):
+    other_commercial_property_unit = (
+        prop_serializers.OtherCommercialPropertyUnitSerializer(read_only=True)
+    )
+    commercial_property = prop_serializers.CommercialPropertyWithoutUnitsSerializer(
+        read_only=True
+    )
+
     class Meta:
         model = listing_models.OtherCommercialPropertyUnitListing
         fields = "__all__"
@@ -209,3 +317,57 @@ class SavedListingSerializer(ModelSerializer):
         model = listing_models.SavedListing
         fields = "__all__"
         read_only_fields = ["listing"]
+
+
+class ListingDetailSerializer(BaseListingSerializer):
+    sub_property_listing = serializers.SerializerMethodField(read_only=True)
+    main_property = prop_serializers.ListingPropertySerializer(read_only=True)
+
+    class Meta:
+        model = listing_models.Listing
+        fields = BaseListingSerializer.Meta.fields + [
+            "sub_property_listing",
+            "main_property",
+        ]
+        read_only_fields = BaseListingSerializer.Meta.read_only_fields
+
+    def get_sub_property_listing(self, obj):
+        property_category_key = obj.main_property.property_category.cat_key
+
+        if property_category_key == constants.APARTMENT_KEY:
+            return ApartmentUnitListingForListingDetailSerializer(
+                instance=listing_models.ApartmentUnitListing.objects.get(listing=obj.id)
+            ).data
+        elif property_category_key == constants.VILLA_KEY:
+            return VillaListingForListingDetailSerializer(
+                instance=listing_models.VillaListing.objects.get(listing=obj.id)
+            ).data
+        elif property_category_key == constants.CONDOMINIUM_KEY:
+            return CondominiumListingForListingDetailSerializer(
+                instance=listing_models.CondominiumListing.objects.get(listing=obj.id)
+            ).data
+        elif property_category_key == constants.SHAREHOUSE_KEY:
+            return SharehouseListingForListingDetailSerializer(
+                instance=listing_models.SharehouseListing.objects.get(listing=obj.id)
+            ).data
+        elif property_category_key == constants.TOWNHOUSE_KEY:
+            return TownhouseListingForListingDetailSerializer(
+                instance=listing_models.TownhouseListing.objects.get(listing=obj.id)
+            ).data
+        elif property_category_key == constants.COMMERCIAL_PROPERTY_KEY:
+            office_unit = listing_models.OfficeListing.objects.filter(listing=obj.id)
+            if office_unit.exists():
+                return OfficeUnitListingForListingDetailSerializer(
+                    instance=office_unit.first()
+                ).data
+
+            other_unit = (
+                listing_models.OtherCommercialPropertyUnitListing.objects.filter(
+                    listing=obj.id
+                )
+            )
+
+            if other_unit.exists():
+                return OtherCommercialPropertyUnitListingForListingDetailSerializer(
+                    instance=other_unit.first()
+                ).data

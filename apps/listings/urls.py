@@ -28,9 +28,19 @@ urlpatterns = [
     ),
     # UPDATE, DELETE, RETRIEVE LISTING
     path(
-        "<int:pk>/",
-        views.ListingRetrieveUpdateDestroyView.as_view(),
-        name="retrieve-update-destroy-listing",
+        "<int:pk>/detail/",
+        views.ListingDetailView.as_view(),
+        name="retrieve-listing",
+    ),
+    path(
+        "<int:pk>/update/",
+        views.ListingUpdateView.as_view(),
+        name="update-listing",
+    ),
+    path(
+        "<int:pk>/delete/",
+        views.ListingDestroyView.as_view(),
+        name="destroy-listing",
     ),
     # LIST LISTING WITHOUT SPECIFYING AGENT/FOR ADMIN ONLY
     # path(

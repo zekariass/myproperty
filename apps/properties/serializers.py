@@ -71,6 +71,14 @@ class PropertyImageSerializer(ModelSerializer):
         read_only_fields = ["id", "added_on", "property"]
 
 
+class PropertyImageOnlyURISerializer(ModelSerializer):
+    label = serializers.SlugRelatedField(slug_field="name", read_only=True)
+
+    class Meta:
+        model = prop_models.PropertyImage
+        fields = ["file_path", "label"]
+
+
 class PropertyVideoSerializer(ModelSerializer):
     class Meta:
         model = prop_models.PropertyVideo
@@ -116,6 +124,20 @@ class ApartmentSerializer(ModelSerializer):
             "added_on",
             "parent_property",
             "units",
+        ]
+        read_only_fields = ["id", "parent_property", "added_on"]
+
+
+class ApartmentWithoutUnitsSerializer(ModelSerializer):
+    class Meta:
+        model = prop_models.Apartment
+        fields = [
+            "id",
+            "floors",
+            "status",
+            "is_multi_unit",
+            "added_on",
+            "parent_property",
         ]
         read_only_fields = ["id", "parent_property", "added_on"]
 
@@ -281,6 +303,25 @@ class CommercialPropertySerializer(ModelSerializer):
         }
 
 
+class CommercialPropertyWithoutUnitsSerializer(ModelSerializer):
+    is_multi_unit = serializers.SerializerMethodField()
+
+    class Meta:
+        model = prop_models.CommercialProperty
+        fields = [
+            "id",
+            "floors",
+            "status",
+            "is_multi_unit",
+            "added_on",
+        ]
+        read_only_fields = ["id", "is_multi_unit", "added_on"]
+
+    def get_is_multi_unit(self, instance):
+        return instance.is_multi_unit
+
+
+
 # class CommercialPropertySerializer(ModelSerializer):
 #     class Meta:
 #         model = prop_models.CommercialProperty
@@ -340,26 +381,94 @@ class PropertyCreateSerializer(ModelSerializer):
         ]
 
 
-# class PropertyUpdateSerializer(ModelSerializer):
-#     """Serialiser for operation other than create"""
+class ListingPropertySerializer(ModelSerializer):
+    """Serialiser for operation other than create"""
 
-#     property_category = PropertyCategorySerializer(read_only=True)
+    address = AddressSerializer(read_only=True)
+    images = serializers.SerializerMethodField(read_only=True)
+    property_category = PropertyCategorySerializer(read_only=True)
 
-#     class Meta:
-#         model = prop_models.Property
-#         fields = [
-#             "id",
-#             "custom_prop_id",
-#             "property_category",
-#             "name",
-#             "is_residential",
-#             "tenure",
-#             "tax_band",
-#             "description",
-#             "added_on",
-#         ]
+    class Meta:
+        model = prop_models.Property
+        fields = [
+            "id",
+            "custom_prop_id",
+            "property_category",
+            "name",
+            "agent",
+            "is_residential",
+            "tenure",
+            "tax_band",
+            "description",
+            "added_on",
+            "images",
+            "address",
+        ]
 
-#         read_only_fields = ["id", "added_on"]
+        read_only_fields = ["id", "custom_prop_id", "images", "added_on"]
+
+    def get_images(self, obj):
+        resultset = PropertyImageOnlyURISerializer(
+            instance=obj.property_images, many=True
+        ).data
+
+        return resultset
+
+
+class PropertySerializerForListingDetail(ModelSerializer):
+    """Serialiser for operation other than create"""
+
+    address = AddressSerializer(read_only=True)
+    images = serializers.SerializerMethodField(read_only=True)
+    sub_property = serializers.SerializerMethodField()
+    property_category = PropertyCategorySerializer(read_only=True)
+
+    class Meta:
+        model = prop_models.Property
+        fields = [
+            "id",
+            "custom_prop_id",
+            "property_category",
+            "name",
+            "agent",
+            "is_residential",
+            "tenure",
+            "tax_band",
+            "description",
+            "added_on",
+            "sub_property",
+            "address",
+            "images",
+        ]
+
+        read_only_fields = ["id", "custom_prop_id", "added_on"]
+
+    def get_sub_property(self, instance):
+        if instance.cat_key == constants.APARTMENT_KEY:
+            return ApartmentSerializer(instance=instance.apartment).data
+        elif instance.cat_key == constants.CONDOMINIUM_KEY:
+            return CondominiumSerializer(instance=instance.condominium).data
+        elif instance.cat_key == constants.SHAREHOUSE_KEY:
+            return SharehouseSerializer(instance=instance.sharehouse).data
+        elif instance.cat_key == constants.VILLA_KEY:
+            return VillaSerializer(instance=instance.villa).data
+        elif instance.cat_key == constants.TOWNHOUSE_KEY:
+            return TownhouseSerializer(instance=instance.townhouse).data
+        elif instance.cat_key == constants.COMMERCIAL_PROPERTY_KEY:
+            return CommercialPropertySerializer(
+                instance=instance.commercial_property
+            ).data
+        elif instance.cat_key == constants.VENUE_KEY:
+            return VenueSerializer(instance=instance.venue).data
+        elif instance.cat_key == constants.LAND_KEY:
+            return LandSerializer(instance=instance.land).data
+
+    def get_images(self, obj):
+        resultset = PropertyImageOnlyURISerializer(
+            instance=obj.property_images, many=True
+        ).data
+
+        return resultset
 
 
 class PropertyAnySerializer(ModelSerializer):

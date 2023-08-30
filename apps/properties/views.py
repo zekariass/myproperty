@@ -1,12 +1,10 @@
 from rest_framework.response import Response
 from django.db import IntegrityError, connection, transaction
 from django.core.exceptions import ObjectDoesNotExist
-from django.shortcuts import render
 from rest_framework.generics import (
     ListCreateAPIView,
     ListAPIView,
     RetrieveDestroyAPIView,
-    CreateAPIView,
     RetrieveUpdateDestroyAPIView,
 )
 from rest_framework import status
@@ -18,7 +16,7 @@ from . import models as prop_models
 from . import serializers as prop_serializers
 
 from apps.commons.serializers import AddressSerializer
-from apps.mixins.permissions import IsAdminUserOrReadOnly
+from apps.mixins.permissions import IsAdminUserOrReadOnly, IsAuthorizedAgentAdmin
 from apps.mixins.functions import generate_custom_property_id
 from apps.mixins import constants
 from apps.mixins.custom_pagination import GeneralCustomPagination
@@ -303,7 +301,7 @@ class PropertyPlanRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 class PropertyCreateView(ListCreateAPIView):
     queryset = prop_models.Property.objects.all()
     serializer_class = prop_serializers.PropertyCreateSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorizedAgentAdmin]
     pagination_class = GeneralCustomPagination
 
     def post(self, request, *args, **kwargs):
@@ -560,11 +558,6 @@ class PropertyListView(ListAPIView):
     permission_classes = [IsAdminUserOrReadOnly]
     pagination_class = GeneralCustomPagination
 
-    # def get_queryset(self):
-    #     query = super().get_queryset()
-    #     print("======================>: ", len(connection.queries))
-    #     return query
-
 
 class PropertyListByAgentView(ListAPIView):
     queryset = prop_models.Property.objects.all()
@@ -707,12 +700,6 @@ class SharehouseRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = prop_models.Sharehouse.objects.all()
     serializer_class = prop_serializers.SharehouseSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
-
-
-# class SharehouseRoomCreateView(CreateAPIView):
-#     queryset = prop_models.Room.objects.all()
-#     serializer_class = prop_serializers.SharehouseRoomSerializer
-#     permission_classes = [IsAuthenticatedOrReadOnly]
 
 
 class SharehouseRoomRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -1463,6 +1450,3 @@ class OtherCommercialPropertyUnitAmenityCreateListView(ListCreateAPIView):
                 get_error_response_dict(message=other_unit_amenity_serializer.errors),
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-
-# class ApartmentUnitPlanCreateListView(CreateAPIView):

@@ -6,8 +6,12 @@ from django.utils import timezone
 from rest_framework.generics import (
     CreateAPIView,
     ListAPIView,
-    RetrieveUpdateDestroyAPIView,
+    UpdateAPIView,
+    DestroyAPIView,
+    RetrieveAPIView,
 )
+from rest_framework.permissions import IsAuthenticated
+
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAdminUser
@@ -19,10 +23,11 @@ from apps.properties import models as prop_models
 from apps.agents import models as agent_models
 
 from apps.mixins.permissions import (
-    IsAdminUserOrReadOnly,
     IsAgent,
     IsAgentOrReadOnly,
     ReadOnly,
+    IsAuthorizedAgentAdmin,
+    DoesAgentOwnThisProperty,
 )
 from apps.mixins import constants
 from apps.mixins.functions import get_boolean_url_query_value
@@ -37,209 +42,322 @@ from . import serializers as listing_serializers
 class ListingCreateView(CreateAPIView):
     queryset = listing_models.Listing.objects.all()
     serializer_class = listing_serializers.ListingSerializer
-    permission_classes = [IsAdminUserOrReadOnly, IsAgentOrReadOnly]
+    permission_classes = [
+        IsAuthorizedAgentAdmin,
+        IsAgentOrReadOnly,
+        DoesAgentOwnThisProperty,
+    ]
 
     def post(self, request):
-        # print(request.data)
+        try:
+            # POP LISTING TYPE DATA, WHICH MUST BE EITHER RENT OR SALE
+            listing_type_data = request.data.pop("listing_type_data")
 
-        # POP LISTING TYPE DATA, WHICH MUST BE EITHER RENT OR SALE
-        listing_type_data = request.data.pop("listing_type_data")
+            # POP SUBLISTING DATA, SUCH AS APARTMENT LISTING, CONDOMINIUM LISTING, ETC
+            sub_listing_data = request.data.pop("sub_listing_data")
 
-        # POP SUBLISTING DATA, SUCH AS APARTMENT LISTING, CONDOMINIUM LISTING, ETC
-        sub_listing_data = request.data.pop("sub_listing_data")
+            # ALL DATABASE OPERATIONS FOR LISTING MUST TAKE PLACE IN ATOMIC
+            with transaction.atomic():
+                # GET PROPERTY ID FROM INCOMMING DATA
+                _property = request.data["main_property"]
 
-        # ALL DATABASE OPERATIONS FOR LISTING MUST TAKE PLACE IN ATOMIC
-        with transaction.atomic():
-            # GET PROPERTY ID FROM INCOMMING DATA
-            _property = request.data["main_property"]
-
-            # GET AGENT BRANCH ID FROM INCOMMING DATA
-            _agent_branch = request.data["agent_branch"]
-            try:
-                # RETRIEVE PROPERTY FROM DB
-                property_instance = prop_models.Property.objects.get(id=_property)
-            except ObjectDoesNotExist:
-                return Response(
-                    get_error_response_dict(
-                        message=f"Property with id {_property} is not found!"
-                    ),
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-            try:
-                # RETRIEVE AGENT BRANCH FROM DB
-                agent_branch_instance = agent_models.AgentBranch.objects.get(
-                    id=_agent_branch
-                )
-            except ObjectDoesNotExist:
-                return Response(
-                    get_error_response_dict(
-                        message=f"Agent branch with id {_agent_branch} is not found!"
-                    ),
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-
-            # GET PROPERTY CATEGORY FROM THE PROPERTY
-            _property_category = property_instance.property_category
-
-            # GET AGENT FROM AGENT BRANCH
-            _agent = agent_branch_instance.agent
-
-            # # CHECK AGENTS ACTIVE SERVICE SUBSCRIPTION
-            # agent_active_subscription = (
-            #     agent_models.AgentServiceSubscription.objects.filter(
-            #         agent=_agent.id, expire_on__gt=timezone.now()
-            #     ).first()
-            # )
-
-            is_listed_by_subscription = False
-            listing_payment_type = request.data.pop("listing_payment_type")
-
-            # CHECK IF THE AGENT HAS ACTIVE SUBSCRIPTION
-            if _agent.has_active_subscription:
-                is_listed_by_subscription = True
-                listing_payment_type = constants.LISTING_PAYMENT_TYPE_SUBSCRIPTION
-
-            # GET LISTING EXPIRATION LIFE TIME FROM LISTING PARAMETERs
-            listing_life_time = sys_models.ListingParameter.objects.get(
-                name=constants.LISTING_PARAM_LISTING_LIFE_TIME
-            )
-
-            listing_expire_on = timezone.now() + timedelta(
-                days=int(listing_life_time.value)
-            )
-
-            # SAVE LISTING
-            listing_serializer = self.get_serializer(data=request.data)
-
-            listing_serializer.is_valid(raise_exception=True)
-            try:
-                listing_instance = listing_serializer.save(
-                    is_listed_by_subscription=is_listed_by_subscription,
-                    agent_branch=agent_branch_instance,
-                    main_property=property_instance,
-                    expire_on=listing_expire_on,
-                    listing_payment_type=listing_payment_type,
-                )
-            except Exception as e:
-                return Response(
-                    get_error_response_dict(message=str(e)),
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            # CHECK IF LISTING IS OF TYPE RENT AND SAVE IF SO
-            if listing_instance.listing_type == constants.LISTING_TYPE_RENT:
-                rent_listing_serializer = listing_serializers.RentListingSerializer(
-                    data=listing_type_data
-                )
-                rent_listing_serializer.is_valid(raise_exception=True)
-
-                rent_listing_serializer.save(listing=listing_instance)
-
-            # CHECK IF LISTING IS OF TYPE SALE AND SAVE IF SO
-            elif listing_instance.listing_type == constants.LISTING_TYPE_SALE:
-                listing_models.SaleListing.objects.create(listing=listing_instance)
-
-            _sub_listing_serializer = None
-            _unit_name = None
-
-            # CHECK SUB-LISTING TYPE, SUCH AS APARTMENT LISTING, VILLA LISTING, ETC.
-            # AND GET THE CORRESPONDING SERIALIZER
-            if _property_category.cat_key == constants.APARTMENT_KEY:
-                _sub_listing_serializer = (
-                    listing_serializers.ApartmentUnitListingSerializer
-                )
-                _unit_name = "apartment_unit"
-            elif _property_category.cat_key == constants.CONDOMINIUM_KEY:
-                _sub_listing_serializer = (
-                    listing_serializers.CondominiumListingSerializer
-                )
-            elif _property_category.cat_key == constants.VILLA_KEY:
-                _sub_listing_serializer = listing_serializers.VillaListingSerializer
-            elif _property_category.cat_key == constants.SHAREHOUSE_KEY:
-                _sub_listing_serializer = (
-                    listing_serializers.SharehouseListingSerializer
-                )
-                # _unit_name = "room"
-
-            elif _property_category.cat_key == constants.TOWNHOUSE_KEY:
-                _sub_listing_serializer = listing_serializers.TownhouseListingSerializer
-            elif _property_category.cat_key == constants.VENUE_KEY:
-                _sub_listing_serializer = listing_serializers.VenueListingSerializer
-            elif _property_category.cat_key == constants.LAND_KEY:
-                _sub_listing_serializer = listing_serializers.LandListingSerializer
-            elif _property_category.cat_key == constants.COMMERCIAL_PROPERTY_KEY:
-                if (
-                    sub_listing_data["unit_type"]
-                    == constants.OFFICE_COMMERCIAL_PROPERTY_UNIT
-                ):
-                    _sub_listing_serializer = (
-                        listing_serializers.OfficeListingSerializer
+                # GET AGENT BRANCH ID FROM INCOMMING DATA
+                _agent_branch = request.data["agent_branch"]
+                try:
+                    # RETRIEVE PROPERTY FROM DB
+                    property_instance = prop_models.Property.objects.get(id=_property)
+                except ObjectDoesNotExist:
+                    return Response(
+                        get_error_response_dict(
+                            message=f"Property with id {_property} is not found!"
+                        ),
+                        status=status.HTTP_404_NOT_FOUND,
                     )
-                    _unit_name = "office_unit"
-
-                elif (
-                    sub_listing_data["unit_type"]
-                    == constants.OTHER_COMMERCIAL_PROPERTY_UNIT
-                ):
-                    _sub_listing_serializer = (
-                        listing_serializers.OtherCommercialPropertyUnitListingSerializer
+                try:
+                    # RETRIEVE AGENT BRANCH FROM DB
+                    agent_branch_instance = agent_models.AgentBranch.objects.get(
+                        id=_agent_branch
                     )
-                    _unit_name = "other_commercial_property_unit"
+                except ObjectDoesNotExist:
+                    return Response(
+                        get_error_response_dict(
+                            message=f"Agent branch with id {_agent_branch} is not found!"
+                        ),
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
 
-            # SAVE SUB-LISTING DATA
-            if _unit_name:
-                sub_listing_data[_unit_name] = sub_listing_data["unit_id"]
+                # GET PROPERTY CATEGORY FROM THE PROPERTY
+                _property_category = property_instance.property_category
 
-            sub_listing_serializer = _sub_listing_serializer(data=sub_listing_data)
-            sub_listing_serializer.is_valid(raise_exception=True)
+                # GET AGENT FROM AGENT BRANCH
+                _agent = agent_branch_instance.agent
 
-            try:
-                sub_listing_serializer.save(listing=listing_instance)
-            except Exception as e:
-                return Response(
-                    get_error_response_dict(message=str(e)),
-                    status=status.HTTP_400_BAD_REQUEST,
+                # # CHECK AGENTS ACTIVE SERVICE SUBSCRIPTION
+                # agent_active_subscription = (
+                #     agent_models.AgentServiceSubscription.objects.filter(
+                #         agent=_agent.id, expire_on__gt=timezone.now()
+                #     ).first()
+                # )
+
+                is_listed_by_subscription = False
+                listing_payment_type = request.data.pop("listing_payment_type")
+
+                # CHECK IF THE AGENT HAS ACTIVE SUBSCRIPTION
+                if _agent.has_active_subscription:
+                    is_listed_by_subscription = True
+                    listing_payment_type = constants.LISTING_PAYMENT_TYPE_SUBSCRIPTION
+
+                # GET LISTING EXPIRATION LIFE TIME FROM LISTING PARAMETERs
+                listing_life_time = sys_models.ListingParameter.objects.get(
+                    name=constants.LISTING_PARAM_LISTING_LIFE_TIME
                 )
 
-            update_agent_discount_tracker(agent_branch_instance.agent.id)
+                listing_expire_on = timezone.now() + timedelta(
+                    days=int(listing_life_time.value)
+                )
 
-            send_new_listing_added_email_to_agent(
-                agent_branch=agent_branch_instance.id,
-                property_category_name=_property_category.name,
-                property_address=model_to_dict(property_instance.address),
-                listing_id=listing_instance.id,
-            )
+                # SAVE LISTING
+                listing_serializer = self.get_serializer(data=request.data)
 
+                listing_serializer.is_valid(raise_exception=True)
+                try:
+                    listing_instance = listing_serializer.save(
+                        is_listed_by_subscription=is_listed_by_subscription,
+                        agent_branch=agent_branch_instance,
+                        main_property=property_instance,
+                        expire_on=listing_expire_on,
+                        listing_payment_type=listing_payment_type,
+                    )
+                except Exception as e:
+                    return Response(
+                        get_error_response_dict(message=str(e)),
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # CHECK IF LISTING IS OF TYPE RENT AND SAVE IF SO
+                if listing_instance.listing_type == constants.LISTING_TYPE_RENT:
+                    rent_listing_serializer = listing_serializers.RentListingSerializer(
+                        data=listing_type_data
+                    )
+                    rent_listing_serializer.is_valid(raise_exception=True)
+
+                    rent_listing_serializer.save(listing=listing_instance)
+
+                # CHECK IF LISTING IS OF TYPE SALE AND SAVE IF SO
+                elif listing_instance.listing_type == constants.LISTING_TYPE_SALE:
+                    listing_models.SaleListing.objects.create(listing=listing_instance)
+
+                _sub_listing_serializer = None
+                _unit_name = None
+
+                # CHECK SUB-LISTING TYPE, SUCH AS APARTMENT LISTING, VILLA LISTING, ETC.
+                # AND GET THE CORRESPONDING SERIALIZER
+                if _property_category.cat_key == constants.APARTMENT_KEY:
+                    # CHECK IF APARTMENT PROPERTY AND MAIN PROPERTY ARE MATCHING
+                    check_property_and_sub_property_match(
+                        prop_models.Apartment,
+                        sub_listing_data["apartment"],
+                        property_instance.id,
+                    )
+
+                    # CHECK IF APARTMENT UNIT AND APARTMENT ARE MATCHING
+                    check_unit_and_sub_property_match(
+                        prop_models.ApartmentUnit,
+                        sub_listing_data["unit_id"],
+                        "apartment",
+                        sub_listing_data["apartment"],
+                    )
+
+                    _sub_listing_serializer = (
+                        listing_serializers.ApartmentUnitListingSerializer
+                    )
+                    _unit_name = "apartment_unit"
+                elif _property_category.cat_key == constants.CONDOMINIUM_KEY:
+                    # CHECK IF CONDOMINIUM PROPERTY AND MAIN PROPERTY ARE MATCHING
+                    check_property_and_sub_property_match(
+                        prop_models.Condominium,
+                        sub_listing_data["condominium"],
+                        property_instance.id,
+                    )
+                    _sub_listing_serializer = (
+                        listing_serializers.CondominiumListingSerializer
+                    )
+                elif _property_category.cat_key == constants.VILLA_KEY:
+                    # CHECK IF VILLA PROPERTY AND MAIN PROPERTY ARE MATCHING
+                    check_property_and_sub_property_match(
+                        prop_models.Villa,
+                        sub_listing_data["villa"],
+                        property_instance.id,
+                    )
+                    _sub_listing_serializer = listing_serializers.VillaListingSerializer
+                elif _property_category.cat_key == constants.SHAREHOUSE_KEY:
+                    # CHECK IF SHAREHOUSE PROPERTY AND MAIN PROPERTY ARE MATCHING
+                    check_property_and_sub_property_match(
+                        prop_models.Sharehouse,
+                        sub_listing_data["sharehouse"],
+                        property_instance.id,
+                    )
+                    _sub_listing_serializer = (
+                        listing_serializers.SharehouseListingSerializer
+                    )
+                    # _unit_name = "room"
+
+                elif _property_category.cat_key == constants.TOWNHOUSE_KEY:
+                    # CHECK IF TOWNHOUSE PROPERTY AND MAIN PROPERTY ARE MATCHING
+                    check_property_and_sub_property_match(
+                        prop_models.Townhouse,
+                        sub_listing_data["townhouse"],
+                        property_instance.id,
+                    )
+                    _sub_listing_serializer = (
+                        listing_serializers.TownhouseListingSerializer
+                    )
+                elif _property_category.cat_key == constants.VENUE_KEY:
+                    # CHECK IF VENUE PROPERTY AND MAIN PROPERTY ARE MATCHING
+                    check_property_and_sub_property_match(
+                        prop_models.Venue,
+                        sub_listing_data["venue"],
+                        property_instance.id,
+                    )
+                    _sub_listing_serializer = listing_serializers.VenueListingSerializer
+                elif _property_category.cat_key == constants.LAND_KEY:
+                    # CHECK IF LAND PROPERTY AND MAIN PROPERTY ARE MATCHING
+                    check_property_and_sub_property_match(
+                        prop_models.Land,
+                        sub_listing_data["land"],
+                        property_instance.id,
+                    )
+                    _sub_listing_serializer = listing_serializers.LandListingSerializer
+                elif _property_category.cat_key == constants.COMMERCIAL_PROPERTY_KEY:
+                    # CHECK IF COMMERCIAL PROPERTY AND MAIN PROPERTY ARE MATCHING
+                    check_property_and_sub_property_match(
+                        prop_models.CommercialProperty,
+                        sub_listing_data["commercial_property"],
+                        property_instance.id,
+                    )
+
+                    if (
+                        sub_listing_data["unit_type"]
+                        == constants.OFFICE_COMMERCIAL_PROPERTY_UNIT
+                    ):
+                        # CHECK IF OFFICE UNIT AND COMMERCIAL PROPERTY ARE MATCHING
+                        check_unit_and_sub_property_match(
+                            prop_models.OfficeUnit,
+                            sub_listing_data["unit_id"],
+                            "commercial_property",
+                            sub_listing_data["commercial_property"],
+                        )
+                        _sub_listing_serializer = (
+                            listing_serializers.OfficeListingSerializer
+                        )
+                        _unit_name = "office_unit"
+
+                    elif (
+                        sub_listing_data["unit_type"]
+                        == constants.OTHER_COMMERCIAL_PROPERTY_UNIT
+                    ):
+                        # CHECK IF OTHER COMMERCIAL PROPERTY UNIT AND COMMERCIAL PROPERTY ARE MATCHING
+                        check_unit_and_sub_property_match(
+                            prop_models.OtherCommercialPropertyUnit,
+                            sub_listing_data["unit_id"],
+                            "commercial_property",
+                            sub_listing_data["commercial_property"],
+                        )
+                        _sub_listing_serializer = (
+                            listing_serializers.OtherCommercialPropertyUnitListingSerializer
+                        )
+                        _unit_name = "other_commercial_property_unit"
+
+                # SAVE SUB-LISTING DATA
+                if _unit_name:
+                    sub_listing_data[_unit_name] = sub_listing_data["unit_id"]
+
+                sub_listing_serializer = _sub_listing_serializer(data=sub_listing_data)
+                sub_listing_serializer.is_valid(raise_exception=True)
+
+                try:
+                    sub_listing_serializer.save(listing=listing_instance)
+                except Exception as e:
+                    return Response(
+                        get_error_response_dict(message=str(e)),
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                update_agent_discount_tracker(agent_branch_instance.agent.id)
+
+                send_new_listing_added_email_to_agent(
+                    agent_branch=agent_branch_instance.id,
+                    property_category_name=_property_category.name,
+                    property_address=model_to_dict(property_instance.address),
+                    listing_id=listing_instance.id,
+                )
+
+                return Response(
+                    get_success_response_dict(data=listing_serializer.data),
+                    status=status.HTTP_201_CREATED,
+                )
+        except Exception as e:
             return Response(
-                get_success_response_dict(data=listing_serializer.data),
-                status=status.HTTP_201_CREATED,
+                get_error_response_dict(message=str(e)),
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-    # @method_decorator(cache_page(60 * 60 * 2))
-    # @method_decorator(
-    #     vary_on_headers(
-    #         "Authorization",
-    #     )
-    # )
-    # def get(self, request):
-    #     return get_constructed_lookup_and_order_by_params(self, request)
 
-    # def get_queryset(self):
-    # GET LISTINGS FOR SPECIFIC AGENT
-    # queryset = super().get_queryset()
-    # print("QQQ=====================QQQ=>: ", len(connection.queries))
+def check_property_and_sub_property_match(
+    sub_property_model, sub_property_id, property_id
+):
+    """
+    Check if sub property, such as apartment and condominium, matchs with the
+    main property
+    """
+    try:
+        sub_property_instance = sub_property_model.objects.select_related(
+            "parent_property"
+        ).get(id=sub_property_id)
 
-    # return queryset
-    # if "agent" not in self.request.query_params:
-    #     return []
-
-    # return get_constructed_lookup_and_order_by_params(self)
+    except:
+        raise Exception(f"Townhouse with id {sub_property_id}  does not exist")
+    if sub_property_instance.parent_property.id != property_id:
+        raise Exception("Sub-property and property are not related!")
 
 
-class ListingRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+def check_unit_and_sub_property_match(
+    unit_model, unit_id, sub_property_attribute, sub_property_id
+):
+    """
+    Check if sub property unit, such as apartment unit and office unit, matchs with the
+    sub property, such as apartment and commercial property respectively
+    """
+    unit_instance = unit_model.objects.select_related(sub_property_attribute).get(
+        id=unit_id
+    )
+    if sub_property_attribute == "apartment":
+        unit_sub_prop_id = unit_instance.apartment.id
+    elif sub_property_attribute == "sharehouse":
+        unit_sub_prop_id = unit_instance.sharehouse.id
+    elif sub_property_attribute == "commercial_property":
+        unit_sub_prop_id = unit_instance.commercial_property.id
+
+    if unit_sub_prop_id != sub_property_id:
+        raise Exception("Unit and sub-property are not related!")
+
+
+class ListingDetailView(RetrieveAPIView):
+    queryset = listing_models.Listing.objects.all()
+    serializer_class = listing_serializers.ListingDetailSerializer
+    # permission_classes = []
+
+
+class ListingDestroyView(DestroyAPIView):
+    queryset = listing_models.Listing.objects.all()
+    serializer_class = listing_serializers.ListingDetailSerializer
+    permission_classes = [IsAuthenticated, IsAgent]
+
+
+class ListingUpdateView(UpdateAPIView):
     queryset = listing_models.Listing.objects.all()
     serializer_class = listing_serializers.ListingSerializer
-    permission_classes = [IsAdminUserOrReadOnly, IsAgentOrReadOnly]
+    permission_classes = [IsAgent, DoesAgentOwnThisProperty]
 
     def update(self, request, pk):
         with transaction.atomic():
@@ -256,6 +374,15 @@ class ListingRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
                     status=status.HTTP_404_NOT_FOUND,
                 )
 
+            # CHECK MAIN PROPERTY ID IS NOT EQUAL TO MAIN PROPERTY IN LISTING. IF SO RETURN ERROR
+            if listing_instance.main_property.id != request.data["main_property"]:
+                return Response(
+                    get_error_response_dict(
+                        message=f"Listing property and provided main_property  does not match."
+                    ),
+                    status=status.HTTP_409_CONFLICT,
+                )
+
             # CHECK IF LISTING TYPE IS CHANGED. LISTING TYPE CAN NOT BE CHANGED, SUCH AS FROM RENT TO SALE
             if (
                 "listing_type" in request.data
@@ -268,7 +395,7 @@ class ListingRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # CHECK IF LISTING TYPE IS CHANGED. LISTING TYPE CAN NOT BE CHANGED, SUCH AS FROM RENT TO SALE
+            # CHECK IF LISTING PAYMENT TYPE IS CHANGED. LISTING PAYMENT TYPE CAN NOT BE CHANGED, SUCH AS FROM RENT TO SALE
             if (
                 "listing_payment_type" in request.data
                 and listing_instance.listing_payment_type
@@ -328,6 +455,15 @@ class ListingRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
                 _listing_type_serilaizer = listing_serializers.SaleListingSerializer
 
+            # CHECK IF LISTING_TYPE FOREIGN KEY FOR LISTING IS SAME AS AS MAIN LISTING
+            if listing_type_data_instance.listing != listing_instance:
+                return Response(
+                    get_error_response_dict(
+                        message=f"Listing ID in listing type data is not same as main listing ID"
+                    ),
+                    status=status.HTTP_409_CONFLICT,
+                )
+
             # DESERIALIZE LISTING TYPE DATA
             listing_type_serilaizer = _listing_type_serilaizer(
                 listing_type_data_instance, data=listing_type_data
@@ -357,7 +493,7 @@ class PublicListingListUsingQuryParamAPIView(ListAPIView):
     """List all listings. For Public use"""
 
     queryset = listing_models.Listing.objects.all()
-    serializer_class = listing_serializers.ListingSerializer
+    serializer_class = listing_serializers.ListingListSerializer
     permission_classes = [ReadOnly]
     pagination_class = GeneralCustomPagination
 

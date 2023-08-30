@@ -59,74 +59,6 @@ def send_email_to_user(*args, **kwargs):
     send_mail(*args, **kwargs)
 
 
-# def send_referrer_coupon_email(
-#     referrer_coupon, percentage_value, fixed_value, recipient
-# ):
-#     subject = "Your Grinmove Coupon!"
-
-#     discount_amount = f"{percentage_value}%" if percentage_value else fixed_value
-
-#     message = f"""
-#                 <html><body><h1>
-#                 Dear Agent,
-
-#                 Thank you for referring! You are rewarded for your good job.
-#                 Your coupon code is '{referrer_coupon}'. You can use your coupon when listing your properties.
-
-#                 Enjoy your {discount_amount} discount.
-
-#                 Earn more coupons by referring to other agents
-#                 </h1></body></html>
-#                             """
-#     from_email = "grinmove@gmail.com"
-#     recipient_list = [recipient]
-#     send_email_to_user(
-#         subject,
-#         "",
-#         from_email,
-#         recipient_list,
-#         html_message=message,
-#         fail_silently=True,
-#     )
-
-
-# def send_referee_coupon_email(referee_coupon, percentage_value, fixed_value, recipient):
-#     subject = "Your Grinmove Coupon!"
-
-#     discount_amount = f"{percentage_value}%" if percentage_value else fixed_value
-
-#     message = f"""<html>
-#                         <style>
-#                         #congra {{
-#                             font-weight: "bold"
-#                             font-size: 2em
-#                             }}
-
-#                         </style>
-#                         <body>
-#                             <h5>Dear New Agent,<h5>
-
-#                             <p><span id="congra">Congratulations!</span> on your first move with Grinmove! Your agent has been created.
-#                             Your coupon code is '{referee_coupon}'. You can use your coupon when listing your properties.</p>
-
-#                             <p>Enjoy your {discount_amount} discount.</p>
-
-#                             <p>Earn more coupons by referring to other agents</p>
-
-#                             <a href="http://127.0.0.1:8000/myproperty-api-docmentation/">Check the doc</a>
-#                         </body></html>"""
-#     from_email = "grinmove@gmail.com"
-#     recipient_list = [recipient]
-#     send_email_to_user(
-#         subject,
-#         "",
-#         from_email,
-#         recipient_list,
-#         html_message=message,
-#         fail_silently=True,
-#     )
-
-
 def property_plan_upload_path(instance, filename):
     now = timezone.now()
     _, extension = os.path.splitext(filename.lower())
@@ -166,14 +98,7 @@ def custom_exception_handler(exc, context):
     response = exception_handler(exc, context)
 
     if response is not None:
-        response.data = {"errors": response.data}
-    # else:
-    #     if isinstance(exc, Exception) and int(getattr(exc, "status_code", None)) == 500:
-    #         response_data = {"errors": str(exc)}
-
-    #         response = Response(
-    #             response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-    #         )
+        response.data = get_error_response_dict(message=response.data)
 
     return response
 
@@ -205,4 +130,4 @@ def get_success_response_dict(message=None, data=None):
 
 
 def get_error_response_dict(message="Request was unsuccessful."):
-    return {"message": message}
+    return {"errors": {"message": message}}

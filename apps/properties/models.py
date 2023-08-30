@@ -246,7 +246,7 @@ class Apartment(AddedOnFieldMixin, PropertyStatusFieldMixin):
         return self.apartment_units.all().count() > 1
 
     def __str__(self):
-        return f"Apartment {self.id}: {self.floors} floors"
+        return f"{self.id} Apartment {self.floors} floors"
 
 
 class PropertyPlan(AddedOnFieldMixin, CommonPropertyShallowFieldsMixin):
@@ -295,7 +295,7 @@ class ApartmentUnit(CommonResidentialFieldsMixin, AddedOnFieldMixin):
     status = None
 
     def __str__(self) -> str:
-        return f"Apartment Unit: {self.id} {self.unit_name_or_number}"
+        return f"{self.id} Apartment Unit: {self.unit_name_or_number}"
 
 
 class ApartmentUnitAmenity(AddedOnFieldMixin):
@@ -340,7 +340,8 @@ class Condominium(
     #     return f"{self.parent_property.cat_key}"
 
     def __str__(self):
-        return "Condominium: %s bath rooms and %s bed rooms" % (
+        return "%d Condominium: %s bath rooms and %s bed rooms" % (
+            self.id,
             self.bath_rooms,
             self.bed_rooms,
         )
@@ -369,7 +370,8 @@ class Villa(
     floor = None
 
     def __str__(self):
-        return "Villa: %s bath rooms and %s bed rooms" % (
+        return "%d Villa: %s bath rooms and %s bed rooms" % (
+            self.id,
             self.bath_rooms,
             self.bed_rooms,
         )
@@ -391,7 +393,8 @@ class Townhouse(
     )
 
     def __str__(self):
-        return "Townhouse: %s bath rooms and %s bed rooms" % (
+        return "%d Townhouse: %s bath rooms and %s bed rooms" % (
+            self.id,
             self.bath_rooms,
             self.bed_rooms,
         )
@@ -441,7 +444,7 @@ class Sharehouse(AddedOnFieldMixin, CommonPropertyShallowFieldsMixin):
     )
 
     def __str__(self) -> str:
-        return f"Sharehouse: uilding type {self.building_type}"
+        return f"{self.id} Sharehouse: uilding type {self.building_type}"
 
 
 class Room(AddedOnFieldMixin, CommonResidentialFieldsMixin):
@@ -473,7 +476,7 @@ class Room(AddedOnFieldMixin, CommonResidentialFieldsMixin):
 
     def __str__(self):
         languages = self.for_speaker_of_languages or "Any"
-        return f"Sharehouse Room: for gender: {self.for_gender.title()}  and speaker of: {languages.title()}"
+        return f"{self.id} Sharehouse Room: for gender: {self.for_gender.title()}  and speaker of: {languages.title()}"
 
 
 class CommercialProperty(
@@ -512,7 +515,7 @@ class CommercialProperty(
         return (self.other_units.all().count() + self.office_units.all().count()) > 1
 
     def __str__(self) -> str:
-        return f"Commercial Property: {self.floors} floors"
+        return f"{self.id} Commercial Property: {self.floors} floors"
 
 
 class OfficeUnit(DescriptionAndAddedOnFieldMixin, CommonResidentialFieldsMixin):
@@ -546,7 +549,7 @@ class OfficeUnit(DescriptionAndAddedOnFieldMixin, CommonResidentialFieldsMixin):
         ]
 
     def __str__(self):
-        return f"Office: {self.seats} seats"
+        return f"{self.id} Office: {self.seats} seats"
 
 
 class OfficeUnitAmenity(AddedOnFieldMixin):
@@ -601,7 +604,7 @@ class OtherCommercialPropertyUnit(
         ]
 
     def __str__(self):
-        return f"Other Commercial Property Unit: Id: {self.id} with {self.rooms} rooms"
+        return f"Id: {self.id}, Other Commercial Property Unit: {self.rooms} rooms"
 
 
 class OtherCommercialPropertyUnitAmenity(AddedOnFieldMixin):
@@ -640,7 +643,7 @@ class Venue(AddedOnFieldMixin, CommonPropertyShallowFieldsMixin):
     area = models.DecimalField("venue area", max_digits=12, decimal_places=5)
 
     def __str__(self):
-        return f"Hall: with {self.total_capacity} capacity"
+        return f"Id: {self.id}, Hall: with {self.total_capacity} capacity"
 
 
 class LandType(DescriptionAndAddedOnFieldMixin):
