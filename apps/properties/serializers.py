@@ -321,7 +321,6 @@ class CommercialPropertyWithoutUnitsSerializer(ModelSerializer):
         return instance.is_multi_unit
 
 
-
 # class CommercialPropertySerializer(ModelSerializer):
 #     class Meta:
 #         model = prop_models.CommercialProperty
@@ -382,7 +381,7 @@ class PropertyCreateSerializer(ModelSerializer):
 
 
 class ListingPropertySerializer(ModelSerializer):
-    """Serialiser for operation other than create"""
+    """Property Serialiser listings list"""
 
     address = AddressSerializer(read_only=True)
     images = serializers.SerializerMethodField(read_only=True)
@@ -416,7 +415,7 @@ class ListingPropertySerializer(ModelSerializer):
 
 
 class PropertySerializerForListingDetail(ModelSerializer):
-    """Serialiser for operation other than create"""
+    """Property Serialiser for Listing Detail"""
 
     address = AddressSerializer(read_only=True)
     images = serializers.SerializerMethodField(read_only=True)
@@ -471,57 +470,58 @@ class PropertySerializerForListingDetail(ModelSerializer):
         return resultset
 
 
-class PropertyAnySerializer(ModelSerializer):
-    """Serialiser for operation other than create"""
+# class PropertyAnySerializer(ModelSerializer):
+#     """Serialiser for operation other than create"""
 
-    sub_property = serializers.SerializerMethodField()
-    property_category = PropertyCategorySerializer(read_only=True)
+#     sub_property = serializers.SerializerMethodField()
+#     property_category = PropertyCategorySerializer(read_only=True)
 
-    class Meta:
-        model = prop_models.Property
-        fields = [
-            "id",
-            "custom_prop_id",
-            "property_category",
-            "name",
-            "agent",
-            "is_residential",
-            "tenure",
-            "tax_band",
-            "description",
-            "added_on",
-            "sub_property",
-        ]
+#     class Meta:
+#         model = prop_models.Property
+#         fields = [
+#             "id",
+#             "custom_prop_id",
+#             "property_category",
+#             "name",
+#             "agent",
+#             "agent_branch",
+#             "is_residential",
+#             "tenure",
+#             "tax_band",
+#             "description",
+#             "added_on",
+#             "sub_property",
+#         ]
 
-        read_only_fields = ["id", "custom_prop_id", "added_on"]
+#         read_only_fields = ["id", "custom_prop_id", "added_on"]
 
-    def get_sub_property(self, instance):
-        if instance.cat_key == constants.APARTMENT_KEY:
-            return ApartmentSerializer(instance=instance.apartment).data
-        elif instance.cat_key == constants.CONDOMINIUM_KEY:
-            return CondominiumSerializer(instance=instance.condominium).data
-        elif instance.cat_key == constants.SHAREHOUSE_KEY:
-            return SharehouseSerializer(instance=instance.sharehouse).data
-        elif instance.cat_key == constants.VILLA_KEY:
-            return VillaSerializer(instance=instance.villa).data
-        elif instance.cat_key == constants.TOWNHOUSE_KEY:
-            return TownhouseSerializer(instance=instance.townhouse).data
-        elif instance.cat_key == constants.COMMERCIAL_PROPERTY_KEY:
-            return CommercialPropertySerializer(
-                instance=instance.commercial_property
-            ).data
-        elif instance.cat_key == constants.VENUE_KEY:
-            return VenueSerializer(instance=instance.venue).data
-        elif instance.cat_key == constants.LAND_KEY:
-            return LandSerializer(instance=instance.land).data
+#     def get_sub_property(self, instance):
+#         if instance.cat_key == constants.APARTMENT_KEY:
+#             return ApartmentSerializer(instance=instance.apartment).data
+#         elif instance.cat_key == constants.CONDOMINIUM_KEY:
+#             return CondominiumSerializer(instance=instance.condominium).data
+#         elif instance.cat_key == constants.SHAREHOUSE_KEY:
+#             return SharehouseSerializer(instance=instance.sharehouse).data
+#         elif instance.cat_key == constants.VILLA_KEY:
+#             return VillaSerializer(instance=instance.villa).data
+#         elif instance.cat_key == constants.TOWNHOUSE_KEY:
+#             return TownhouseSerializer(instance=instance.townhouse).data
+#         elif instance.cat_key == constants.COMMERCIAL_PROPERTY_KEY:
+#             return CommercialPropertySerializer(
+#                 instance=instance.commercial_property
+#             ).data
+#         elif instance.cat_key == constants.VENUE_KEY:
+#             return VenueSerializer(instance=instance.venue).data
+#         elif instance.cat_key == constants.LAND_KEY:
+#             return LandSerializer(instance=instance.land).data
 
-    # @property
-    # def data(self):
-    #     data = super().data
-    #     child_serializer = self.get_child_property(self.instance)
-    #     if child_serializer:
-    #         data["sub_property"] = child_serializer.data
-    #     return data
+#     # @property
+#     # def data(self):
+#     #     data = super().data
+#     #     child_serializer = self.get_child_property(self.instance)
+#     #     if child_serializer:
+#     #         data["sub_property"] = child_serializer.data
+#     #     return data
 
 
 class PropertyCategoryAmenitySerializer(ModelSerializer):

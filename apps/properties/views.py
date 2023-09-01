@@ -1,14 +1,19 @@
 from rest_framework.response import Response
 from django.db import IntegrityError, connection, transaction
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
+from django.db.models import Q
+
 from rest_framework.generics import (
     ListCreateAPIView,
+    CreateAPIView,
     ListAPIView,
     RetrieveDestroyAPIView,
     RetrieveUpdateDestroyAPIView,
 )
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser
+from apps.agents.models import AgentAdmin, AgentBranch
 
 from apps.properties import tasks
 
@@ -16,8 +21,16 @@ from . import models as prop_models
 from . import serializers as prop_serializers
 
 from apps.commons.serializers import AddressSerializer
-from apps.mixins.permissions import IsAdminUserOrReadOnly, IsAuthorizedAgentAdmin
-from apps.mixins.functions import generate_custom_property_id
+from apps.mixins.permissions import (
+    DoesAgentOwnThisProperty,
+    IsAdminUserOrReadOnly,
+    IsAuthorizedAgentAdmin,
+    IsAgent,
+)
+from apps.mixins.functions import (
+    generate_custom_property_id,
+    get_boolean_url_query_value,
+)
 from apps.mixins import constants
 from apps.mixins.custom_pagination import GeneralCustomPagination
 from apps.mixins.functions import get_success_response_dict, get_error_response_dict
@@ -298,7 +311,7 @@ class PropertyPlanRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 
 # ====================== PROPERTY ========================================
-class PropertyCreateView(ListCreateAPIView):
+class PropertyCreateView(CreateAPIView):
     queryset = prop_models.Property.objects.all()
     serializer_class = prop_serializers.PropertyCreateSerializer
     permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorizedAgentAdmin]
@@ -552,40 +565,221 @@ class PropertyCreateView(ListCreateAPIView):
             )
 
 
-class PropertyListView(ListAPIView):
+def get_property_constructed_lookup_and_order_by_params(
+    request,
+    own_agent=None,
+    agent_in_query=None,
+    own_agent_branch=None,
+    agent_branch_in_query=None,
+):
+    """
+    Construct lookup and ordering params from the url query parameters.
+    The client can flexibly set query params, like:
+
+    ?agent=23&is_residential=true
+
+    It is possible to set all or anyone or none of the following parameters.
+
+    ######################################
+    Search params:
+            - agent
+            - agent_branch
+            - is_residential
+            - property_id
+            - property_name
+            - property_category => send property_category_key
+            - tenure
+            - tax_band
+            - added_since => ie. 10_days, 24_hours, 1_week, 3_weeks, etc
+
+    Sorting Params:
+        - sort_by
+    """
+    q = request.query_params
+    agent = agent_in_query if agent_in_query else own_agent
+
+    agent_branch = agent_branch_in_query if agent_branch_in_query else own_agent_branch
+
+    is_residential = get_boolean_url_query_value(request, "is_residential")
+
+    all_lookups = []
+    lookups_params = {}
+    if agent:
+        lookups_params["agent_branch__agent"] = agent
+    if agent_branch:
+        lookups_params["agent_branch"] = agent_branch
+    if "property_id" in q:
+        lookups_params["property_id"] = q["property_id"]
+    if "custom_prop_id" in q:
+        lookups_params["custom_prop_id"] = q["custom_prop_id"]
+    if "property_category" in q:
+        lookups_params["property_category__cat_key"] = q["property_category"]
+    if "property_name" in q:
+        lookups_params["name__icontains"] = q["property_name"]
+    if is_residential is not None:
+        lookups_params["is_residential"] = is_residential
+    if "tenure" in q:
+        lookups_params["tenure"] = q["tenure"]
+    if "tax_band" in q:
+        lookups_params["tax_band"] = q["tax_band"]
+
+    # PROPERTY REGISTRATION DATE LOOKUP
+    added_since = (
+        request.query_params["added_since"]
+        if "added_since" in request.query_params
+        else None
+    )
+
+    # IF ADDED DATE QUERY PARAM PROVIDED
+    if added_since:
+        if "hour" in added_since:
+            time_delta = timezone.timedelta(hours=int(added_since.split("_")[0]))
+        elif "day" in added_since:
+            time_delta = timezone.timedelta(days=int(added_since.split("_")[0]))
+        elif "week" in added_since:
+            time_delta = timezone.timedelta(weeks=int(added_since.split("_")[0]))
+        lookups_params["added_on__gte"] = timezone.now() - time_delta
+
+    q_lookup1 = Q(**lookups_params)
+
+    all_lookups.append(q_lookup1)
+
+    # ORDER BY
+    ordering_params = request.GET.getlist("sort_by")
+
+    return (all_lookups, ordering_params)
+
+
+class PropertyListByAdminView(ListAPIView):
     queryset = prop_models.Property.objects.all()
-    serializer_class = prop_serializers.PropertyAnySerializer
-    permission_classes = [IsAdminUserOrReadOnly]
+    serializer_class = prop_serializers.ListingPropertySerializer
+    permission_classes = [IsAdminUser]
     pagination_class = GeneralCustomPagination
+
+    def get_queryset(self):
+        user = self.request.user
+
+        # CHECK IF AGENT BRANCH IS IN QUERY PARAMS, OTHERWISE SET IT NONE IN THE LOOKUP
+        # IT ALLOWS TO LIST PROPERTIES FROM A SPECIFIC AGENT BRANCH
+        agent_branch_in_query = None
+        if "agent_branch" in self.request.query_params:
+            agent_branch_in_query = self.request.query_params.get("agent_branch")
+
+        agent_in_query = None
+        if "agent" in self.request.query_params:
+            agent_in_query = self.request.query_params.get("agent")
+
+        # CONTRUCT THE LOOKUP AND ORDERING PARAMS FROM QUERY PARAMS
+        (
+            constructed_lookups,
+            order_by,
+        ) = get_property_constructed_lookup_and_order_by_params(
+            self.request,
+            agent_in_query=agent_in_query,
+            agent_branch_in_query=agent_branch_in_query,
+        )
+
+        # FILTER THE PROPERTIES
+        queryset = (
+            super().get_queryset().filter(*constructed_lookups).order_by(*order_by)
+        )
+        return queryset
 
 
 class PropertyListByAgentView(ListAPIView):
     queryset = prop_models.Property.objects.all()
-    serializer_class = prop_serializers.PropertyAnySerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    serializer_class = prop_serializers.ListingPropertySerializer
+    permission_classes = [IsAgent]
 
     def get_queryset(self):
-        agent_id = self.kwargs["agent"]
-        queryset = super().get_queryset().filter(agent=agent_id)
+        # agent_id = self.kwargs["agent"]
+        user = self.request.user
+
+        # CHECK IF AGENT BRANCH IS IN QUERY PARAMS, OTHERWISE SET IT NONE IN THE LOOKUP
+        # IT ALLOWS TO LIST PROPERTIES FROM A SPECIFIC AGENT BRANCH
+        _agent_branch_in_query = None
+        if "agent_branch" in self.request.query_params:
+            _agent_branch_in_query = self.request.query_params.get("agent_branch")
+
+        # GET THE AGENT ADMIN ASSOCIATED WITH CURRENT USER
+        # IF NO AGENT ADMIN OBJECT FOUND, REPLY ERROR
+        agent_admin_instance = AgentAdmin.objects.select_related(
+            "agent_branch", "agent_branch__agent"
+        ).filter(user=user.id)
+
+        if not agent_admin_instance.exists():
+            return Response(
+                get_error_response_dict(
+                    message="You need to signin as Agent to access your listings"
+                ),
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # GET THE AGENT AND AGENT BRANCH THE CURRENT USER IS WORKING IN
+        own_agent_branch = agent_admin_instance.first().agent_branch
+        own_agent = own_agent_branch.agent
+
+        # VARIABLE WHICH HOLDS THE AGENT BRANCH ID FROM QUERY PARAM
+        agent_branch_in_query = None
+
+        # IF THE AGENT BRANCH THAT THE CURRENT USER IS WORKING IS A MAIN BRANCH,
+        # THE USER CAN ACCESS OTHER AGENT BRANCHES PROPERTIES OF THE SAME AGENT
+        # GET THE AGENT BRANCH USING THE AGENT BRANCH ID FROM QUERY PARAM AND COMPARE
+        # WITH USERS OWN AGENT. IF EQUAL, THEN ADD THE AGENT BRANCH QUERY PARAM IN THE LOOKUP
+        if own_agent_branch.is_main_branch and _agent_branch_in_query:
+            query_agent_branch_instance = AgentBranch.objects.filter(
+                id=_agent_branch_in_query
+            ).first()
+            if (
+                query_agent_branch_instance
+                and query_agent_branch_instance.agent == own_agent
+            ):
+                agent_branch_in_query = _agent_branch_in_query
+
+        is_main_branch = own_agent_branch.is_main_branch
+
+        # CONTRUCT THE LOOKUP AND ORDERING PARAMS FROM QUERY PARAMS
+        (
+            constructed_lookups,
+            order_by,
+        ) = get_property_constructed_lookup_and_order_by_params(
+            self.request,
+            own_agent=own_agent.id,
+            own_agent_branch=None if is_main_branch else own_agent_branch.id,
+            agent_branch_in_query=agent_branch_in_query,
+        )
+
+        queryset = (
+            super().get_queryset().filter(*constructed_lookups).order_by(*order_by)
+        )
         return queryset
 
 
-class PropertyListByAgentBranchView(ListAPIView):
+# class PropertyListByAgentBranchView(ListAPIView):
+#     queryset = prop_models.Property.objects.all()
+#     serializer_class = prop_serializers.ListingPropertySerializer
+#     permission_classes = [IsAuthenticatedOrReadOnly]
+
+#     def get_queryset(self):
+#         agent_branch_id = self.kwargs["agent_branch"]
+#         queryset = super().get_queryset().filter(agent_branch=agent_branch_id)
+
+#         return queryset
+
+
+class AdminPropertyRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = prop_models.Property.objects.all()
-    serializer_class = prop_serializers.PropertyAnySerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
-
-    def get_queryset(self):
-        agent_branch_id = self.kwargs["agent_branch"]
-        queryset = super().get_queryset().filter(agent_branch=agent_branch_id)
-
-        return queryset
+    serializer_class = prop_serializers.ListingPropertySerializer
+    permission_classes = [IsAdminUser]
 
 
-class PropertyRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+class AgentPropertyRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = prop_models.Property.objects.all()
-    serializer_class = prop_serializers.PropertyAnySerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    serializer_class = prop_serializers.ListingPropertySerializer
+    permission_classes = [IsAgent, DoesAgentOwnThisProperty]
+
+    # def update(self, request, *args, **kwargs):
+    #     return super().update(request, *args, **kwargs)
 
 
 # =====================APARTMENT=========================================================

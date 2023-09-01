@@ -65,7 +65,9 @@ class ListingCreateView(CreateAPIView):
                 _agent_branch = request.data["agent_branch"]
                 try:
                     # RETRIEVE PROPERTY FROM DB
-                    property_instance = prop_models.Property.objects.get(id=_property)
+                    property_instance = prop_models.Property.objects.select_related(
+                        "property_category"
+                    ).get(id=_property)
                 except ObjectDoesNotExist:
                     return Response(
                         get_error_response_dict(
@@ -73,6 +75,10 @@ class ListingCreateView(CreateAPIView):
                         ),
                         status=status.HTTP_404_NOT_FOUND,
                     )
+
+                # CHECK IF ACTIVE LISTING EXIST
+                check_if_active_listing_exist(property_instance, sub_listing_data)
+
                 try:
                     # RETRIEVE AGENT BRANCH FROM DB
                     agent_branch_instance = agent_models.AgentBranch.objects.get(
@@ -129,10 +135,7 @@ class ListingCreateView(CreateAPIView):
                         listing_payment_type=listing_payment_type,
                     )
                 except Exception as e:
-                    return Response(
-                        get_error_response_dict(message=str(e)),
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
+                    raise Exception(str(e))
 
                 # CHECK IF LISTING IS OF TYPE RENT AND SAVE IF SO
                 if listing_instance.listing_type == constants.LISTING_TYPE_RENT:
@@ -303,6 +306,58 @@ class ListingCreateView(CreateAPIView):
             )
 
 
+def check_if_active_listing_exist(property_instance, sub_listing_data, listing_id=None):
+    active_unit_listing = None
+
+    # CHECK IF PROPERTY IS MULTI-UNIT PROPERTY TYPE BY CATEGORY KEY
+    # THEN GET THE UNIT LISTING DATA FROM DB WHICH ARE NOT EXPIRED
+    if (
+        property_instance.property_category.cat_key == constants.APARTMENT_KEY
+        or property_instance.property_category.cat_key
+        == constants.COMMERCIAL_PROPERTY_KEY
+    ):
+        # print(
+        #     "=====================================>:",
+        #     sub_listing_data,
+        # )
+
+        if (
+            sub_listing_data["unit_type"]
+            == constants.LISTING_PROPERTY_UNIT_TYPE_APARTMENT_UNIT
+        ):
+            active_unit_listing = listing_models.ApartmentUnitListing.objects.filter(
+                apartment_unit=sub_listing_data["unit_id"],
+                listing__expire_on__gt=timezone.now(),
+            ).exclude(listing=listing_id)
+        elif (
+            sub_listing_data["unit_type"]
+            == constants.LISTING_PROPERTY_UNIT_TYPE_OFFICE_UNIT
+        ):
+            active_unit_listing = listing_models.OfficeListing.objects.filter(
+                office_unit=sub_listing_data["unit_id"],
+                listing__expire_on__gt=timezone.now(),
+            ).exclude(listing=listing_id)
+        elif sub_listing_data["unit_type"] == constants.OTHER_COMMERCIAL_PROPERTY_UNIT:
+            active_unit_listing = (
+                listing_models.OtherCommercialPropertyUnitListing.objects.filter(
+                    other_commercial_property_unit=sub_listing_data["unit_id"],
+                    listing__expire_on__gt=timezone.now(),
+                ).exclude(listing=listing_id)
+            )
+    # IF PROPERTY IS NON MULTI-UNIT TYPE, THEN GET LISTING FROM LISTING TABLE WHICH
+    # ARE NOT EXPIRED
+    else:
+        active_unit_listing = listing_models.Listing.objects.filter(
+            main_property=property_instance.id, expire_on__gt=timezone.now()
+        ).exclude(id=listing_id)
+
+    # IF THERE IS ACTIVE LISTING, RAISE EXCEPTION THAT WILL BE HANDLED IN THE VIEW CLASS
+    if active_unit_listing and active_unit_listing.exists():
+        raise Exception(
+            "Active listing for same property exist. You cannot have two active listing for same property."
+        )
+
+
 def check_property_and_sub_property_match(
     sub_property_model, sub_property_id, property_id
 ):
@@ -316,7 +371,7 @@ def check_property_and_sub_property_match(
         ).get(id=sub_property_id)
 
     except:
-        raise Exception(f"Townhouse with id {sub_property_id}  does not exist")
+        raise Exception(f"Sub-property with id {sub_property_id}  does not exist")
     if sub_property_instance.parent_property.id != property_id:
         raise Exception("Sub-property and property are not related!")
 
@@ -345,16 +400,16 @@ def check_unit_and_sub_property_match(
 class ListingDetailView(RetrieveAPIView):
     queryset = listing_models.Listing.objects.all()
     serializer_class = listing_serializers.ListingDetailSerializer
-    # permission_classes = []
+    permission_classes = [ReadOnly]
 
 
 class ListingDestroyView(DestroyAPIView):
     queryset = listing_models.Listing.objects.all()
     serializer_class = listing_serializers.ListingDetailSerializer
-    permission_classes = [IsAuthenticated, IsAgent]
+    permission_classes = [DoesAgentOwnThisProperty, IsAgent]
 
 
-class ListingUpdateView(UpdateAPIView):
+class ListingUpdateView(UpdateAPIView, RetrieveAPIView):
     queryset = listing_models.Listing.objects.all()
     serializer_class = listing_serializers.ListingSerializer
     permission_classes = [IsAgent, DoesAgentOwnThisProperty]
@@ -367,12 +422,32 @@ class ListingUpdateView(UpdateAPIView):
 
             try:
                 # RETRIEVE LISTING INSTANCE
-                listing_instance = listing_models.Listing.objects.get(pk=pk)
+                listing_instance = listing_models.Listing.objects.select_related(
+                    "main_property"
+                ).get(pk=pk)
             except:
                 return Response(
                     get_error_response_dict(message=f"Listing with id {pk} not found!"),
                     status=status.HTTP_404_NOT_FOUND,
                 )
+
+            # CHECK IF LISTING IS EXPIRED
+            if listing_instance.expire_on <= timezone.now():
+                return Response(
+                    get_error_response_dict(message=f"Listing has expired!"),
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # POP SUBLISTING DATA, SUCH AS APARTMENT LISTING, CONDOMINIUM LISTING, ETC
+            sub_listing_data = request.data.pop("sub_listing_data")
+
+            # IF is_active=True IS INCLUDED IN THE UPDATE DATA,
+            # CHECK IF OTHER ACTIVE LISTING EXIST FOR SAME PROPERTY
+            check_if_active_listing_exist(
+                listing_instance.main_property,
+                sub_listing_data,
+                listing_instance.id,
+            )
 
             # CHECK MAIN PROPERTY ID IS NOT EQUAL TO MAIN PROPERTY IN LISTING. IF SO RETURN ERROR
             if listing_instance.main_property.id != request.data["main_property"]:

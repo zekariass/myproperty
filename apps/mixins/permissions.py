@@ -97,22 +97,42 @@ class DoesAgentOwnThisProperty(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
-        if request.method not in SAFE_METHODS and request.data:
-            user_agent_branch = get_cached_or_from_db.get_user_agent_branch(
-                request.user
-            )
+        from apps.properties.views import AgentPropertyRetrieveUpdateDestroyView
+        from apps.listings.views import ListingDestroyView, ListingUpdateView
+        from apps.listings.models import Listing
+
+        # if request.method not in SAFE_METHODS:
+        user_agent_branch = get_cached_or_from_db.get_user_agent_branch(request.user)
+        listing_instance = None
+        if "main_property" in request.data:
             property_id = request.data["main_property"]
+        elif isinstance(view, AgentPropertyRetrieveUpdateDestroyView):
+            property_id = view.kwargs.get("pk")
+        elif isinstance(view, ListingDestroyView) or isinstance(
+            view, ListingUpdateView
+        ):
+            listing_id = view.kwargs.get("pk")
+            listing_instance = Listing.objects.select_related("main_property").get(
+                id=listing_id
+            )
+
+        else:
+            raise PermissionDenied("Property id not provided!")
+
+        if listing_instance:
+            property_instance = listing_instance.main_property
+        else:
             property_instance = Property.objects.select_related("agent").get(
                 id=property_id
             )
-            property_agent_branch = property_instance.agent_branch
+        property_agent_branch = property_instance.agent_branch
 
-            if user_agent_branch != property_agent_branch:
-                if not (
-                    user_agent_branch.is_main_branch
-                    and (user_agent_branch.agent == property_agent_branch.agent)
-                ):
-                    raise PermissionDenied("Your agent does not own this property!")
+        if user_agent_branch != property_agent_branch:
+            if not (
+                user_agent_branch.is_main_branch
+                and (user_agent_branch.agent == property_agent_branch.agent)
+            ):
+                raise PermissionDenied("Your agent does not own this property!")
 
         return True
 

@@ -68,30 +68,30 @@ class Listing(DescriptionAndAddedOnFieldMixin, ExpireOnFieldMixin):
         return f"{self.id}: {self.listing_type}"
 
     def save(self, *args, **kwargs):
-        # CHECK IF FEATURING IS APPROVED BUT FEATURING PAUMENT AND FEATURING DATE IS NULL
+        # CHECK IF FEATURING IS APPROVED BUT FEATURING PAYMENT AND FEATURING DATE IS NULL
         if self.is_featuring_approved and (
             not self.featured_on or not self.featuring_payment
         ):
-            raise ValidationError(
+            raise Exception(
                 "featured_on or featuring_payment should not be null, featuring is approved!"
             )
 
-        # CHECK IF NON MULTI UNIT PROPERTY HAS ACTIVE LEASTING ALREADY
-        # MULTI-UNIT MAIN PROPERTY MAY HAVE MORE THAN ONE LISTING, EACH LISTING FOR ONE UNIT
-        query1 = Q(main_property__property_category__cat_key=constants.APARTMENT_KEY)
-        query2 = Q(
-            main_property__property_category__cat_key=constants.COMMERCIAL_PROPERTY_KEY
-        )
+        # # CHECK IF NON MULTI UNIT PROPERTY HAS ACTIVE LEASTING ALREADY
+        # # MULTI-UNIT MAIN PROPERTY MAY HAVE MORE THAN ONE LISTING, EACH LISTING FOR ONE UNIT
+        # query1 = Q(main_property__property_category__cat_key=constants.APARTMENT_KEY)
+        # query2 = Q(
+        #     main_property__property_category__cat_key=constants.COMMERCIAL_PROPERTY_KEY
+        # )
 
-        active_listings_for_this_property = Listing.objects.filter(
-            main_property=self.main_property, expire_on__gt=timezone.now()
-        ).exclude(Q(query1 | query2))
+        # active_listings_for_this_property = Listing.objects.filter(
+        #     main_property=self.main_property, expire_on__gt=timezone.now()
+        # ).exclude(Q(query1 | query2))
 
-        # RAISE VALIDATION ERROR IF PROPERTY WITH ACTIVE LISTING IS PRESENT
-        if active_listings_for_this_property:
-            raise ValidationError(
-                f"There is active listing already for property with id {self.main_property}"
-            )
+        # # RAISE VALIDATION ERROR IF PROPERTY WITH ACTIVE LISTING IS PRESENT
+        # if active_listings_for_this_property:
+        #     raise Exception(
+        #         f"There is active listing already for property with id {self.main_property}"
+        #     )
         return super().save(*args, **kwargs)
 
 
@@ -126,17 +126,17 @@ class ApartmentUnitListing(CommonListingMixin):
     apartment = models.ForeignKey(prop_models.Apartment, on_delete=models.CASCADE)
 
     def save(self, *args, **kwargs):
-        # CHECK IF UNIT PROPERTY HAS ACTIVE LEASTING ALREADY
-        active_listings_for_this_unit = ApartmentUnitListing.objects.filter(
-            apartment_unit=self.apartment_unit,
-            listing__expire_on__gt=timezone.now(),
-        )
+        # # CHECK IF UNIT PROPERTY HAS ACTIVE LEASTING ALREADY
+        # active_listings_for_this_unit = ApartmentUnitListing.objects.filter(
+        #     apartment_unit=self.apartment_unit,
+        #     listing__expire_on__gt=timezone.now(),
+        # )
 
-        # RAISE VALIDATION ERROR IF UNIT PROPERTY WITH ACTIVE LISTING IS PRESENT
-        if active_listings_for_this_unit:
-            raise ValidationError(
-                f"There is active listing already for property unit with id {self.apartment_unit}"
-            )
+        # # RAISE VALIDATION ERROR IF UNIT PROPERTY WITH ACTIVE LISTING IS PRESENT
+        # if active_listings_for_this_unit:
+        #     raise ValidationError(
+        #         f"There is active listing already for property unit with id {self.apartment_unit}"
+        #     )
         return super().save(*args, **kwargs)
 
 
@@ -186,17 +186,17 @@ class OfficeListing(CommonListingMixin):
     )
 
     def save(self, *args, **kwargs):
-        # CHECK IF UNIT PROPERTY HAS ACTIVE LEASTING ALREADY
-        active_listings_for_this_unit = OfficeListing.objects.filter(
-            office_unit=self.office_unit,
-            listing__expire_on__gt=timezone.now(),
-        )
+        # # CHECK IF UNIT PROPERTY HAS ACTIVE LEASTING ALREADY
+        # active_listings_for_this_unit = OfficeListing.objects.filter(
+        #     office_unit=self.office_unit,
+        #     listing__expire_on__gt=timezone.now(),
+        # )
 
-        # RAISE VALIDATION ERROR IF UNIT PROPERTY WITH ACTIVE LISTING IS PRESENT
-        if active_listings_for_this_unit:
-            raise ValidationError(
-                f"There is active listing already for property unit with id {self.office_unit}"
-            )
+        # # RAISE VALIDATION ERROR IF UNIT PROPERTY WITH ACTIVE LISTING IS PRESENT
+        # if active_listings_for_this_unit:
+        #     raise ValidationError(
+        #         f"There is active listing already for property unit with id {self.office_unit}"
+        #     )
         return super().save(*args, **kwargs)
 
 
@@ -212,19 +212,19 @@ class OtherCommercialPropertyUnitListing(CommonListingMixin):
     )
 
     def save(self, *args, **kwargs):
-        # CHECK IF UNIT PROPERTY HAS ACTIVE LEASTING ALREADY
-        active_listings_for_this_unit = (
-            OtherCommercialPropertyUnitListing.objects.filter(
-                other_commercial_property_unit=self.other_commercial_property_unit,
-                listing__expire_on__gt=timezone.now(),
-            )
-        )
+        # # CHECK IF UNIT PROPERTY HAS ACTIVE LEASTING ALREADY
+        # active_listings_for_this_unit = (
+        #     OtherCommercialPropertyUnitListing.objects.filter(
+        #         other_commercial_property_unit=self.other_commercial_property_unit,
+        #         listing__expire_on__gt=timezone.now(),
+        #     )
+        # )
 
-        # RAISE VALIDATION ERROR IF UNIT PROPERTY WITH ACTIVE LISTING IS PRESENT
-        if active_listings_for_this_unit:
-            raise ValidationError(
-                f"There is active listing already for property unit with id {self.other_commercial_property_unit}"
-            )
+        # # RAISE VALIDATION ERROR IF UNIT PROPERTY WITH ACTIVE LISTING IS PRESENT
+        # if active_listings_for_this_unit:
+        #     raise ValidationError(
+        #         f"There is active listing already for property unit with id {self.other_commercial_property_unit}"
+        #     )
         return super().save(*args, **kwargs)
 
 

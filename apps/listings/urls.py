@@ -4,7 +4,7 @@ from . import views
 urlpatterns = [
     # CREATE LISTING
     path(
-        "",
+        "agent/create/",
         views.ListingCreateView.as_view(),
         name="list-create-listing",
     ),
@@ -28,19 +28,19 @@ urlpatterns = [
     ),
     # UPDATE, DELETE, RETRIEVE LISTING
     path(
-        "<int:pk>/detail/",
+        "<int:pk>/agent/detail/",
         views.ListingDetailView.as_view(),
-        name="retrieve-listing",
+        name="agent-retrieve-listing",
     ),
     path(
-        "<int:pk>/update/",
+        "<int:pk>/agent/update/",
         views.ListingUpdateView.as_view(),
-        name="update-listing",
+        name="agent-update-listing",
     ),
     path(
-        "<int:pk>/delete/",
+        "<int:pk>/agent/delete/",
         views.ListingDestroyView.as_view(),
-        name="destroy-listing",
+        name="agent-destroy-listing",
     ),
     # LIST LISTING WITHOUT SPECIFYING AGENT/FOR ADMIN ONLY
     # path(

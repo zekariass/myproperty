@@ -149,23 +149,32 @@ urlpatterns = [
     # ======================================================================
     # PROPERTY ROUTES
     # ======================================================================
-    path("", prop_views.PropertyCreateView.as_view(), name="create-property"),
-    path("list/", prop_views.PropertyListView.as_view(), name="list-property"),
+    path("create/", prop_views.PropertyCreateView.as_view(), name="create-property"),
     path(
-        "<int:pk>/",
-        prop_views.PropertyRetrieveUpdateDestroyView.as_view(),
-        name="retrieve-update-destroy-property",
+        "agent/<int:pk>/",
+        prop_views.AgentPropertyRetrieveUpdateDestroyView.as_view(),
+        name="agent-retrieve-update-destroy-property",
     ),
     path(
-        "list-by-agent/<int:agent>/",
+        "agent/list/",
         prop_views.PropertyListByAgentView.as_view(),
-        name="list-property-by-agent",
+        name="agent-list-property",
     ),
     path(
-        "list-property-by-agent-branch/<int:agent_branch>/",
-        prop_views.PropertyListByAgentBranchView.as_view(),
-        name="list-property-by-agent-branch",
+        "admin/<int:pk>/",
+        prop_views.AdminPropertyRetrieveUpdateDestroyView.as_view(),
+        name="admin-retrieve-update-destroy-property",
     ),
+    path(
+        "admin/list/",
+        prop_views.PropertyListByAdminView.as_view(),
+        name="admin-list-property",
+    ),
+    # path(
+    #     "list-property-by-agent-branch/<int:agent_branch>/",
+    #     prop_views.PropertyListByAgentBranchView.as_view(),
+    #     name="list-property-by-agent-branch",
+    # ),
     # ======================================================================
     # APARTMENT ROUTES
     # ======================================================================
@@ -365,28 +374,4 @@ urlpatterns = [
         prop_views.OtherCommercialPropertyUnitAmenityCreateListView.as_view(),
         name="list-create-office-unit-amenity",
     ),
-    # ======================================================================
-    # ADD PLAN TO APARTMENT UNIT
-    # ======================================================================
-    # path(
-    #     "apartments/units/<int:pk>/plan/",
-    #     prop_views.ApartmentUnitRetrieveUpdateDestroyView.as_view(),
-    #     name="list-create-apartment-unit-plan",
-    # ),
-    # ======================================================================
-    # ADD PLAN TO OFFICE UNIT
-    # ======================================================================
-    # path(
-    #     "officeunits/<int:officeunits_id>/plan/",
-    #     prop_views.OfficeUnitPlanCreateListView.as_view(),
-    #     name="list-create-office-unit-plan",
-    # ),
-    # ======================================================================
-    # ADD PLAN TO APARTMENT UNIT
-    # ======================================================================
-    # path(
-    #     "othercommercialpropertyunits/<int:othercommercialpropertyunits_id>/plan/",
-    #     prop_views.OtherCommercialPropertyUnitPlanCreateListView.as_view(),
-    #     name="list-create-othercommercialproperty-unit-plan",
-    # ),
 ]
