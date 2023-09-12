@@ -27,15 +27,15 @@ class Payment(AddedOnFieldMixin):
     exchange_rate = models.DecimalField(
         max_digits=10, decimal_places=5, max_length=10, default=1.00000
     )
-    coupon = models.ForeignKey(sys_models.Coupon, on_delete=models.SET_NULL, null=True)
+    coupon = models.ForeignKey(
+        sys_models.Coupon, on_delete=models.SET_NULL, null=True, blank=True
+    )
     payment_purpose = models.CharField(max_length=250, choices=PAYMENT_PURPOSES)
     is_approved = models.BooleanField(
         "is payment approved",
         default=False,
     )
-    approved_on = models.DateField(
-        null=True,
-    )
+    approved_on = models.DateField(null=True, blank=True)
     # ordered_on = models.DateField(
     #     default=timezone.now,
     # )

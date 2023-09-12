@@ -64,7 +64,7 @@ urlpatterns = [
     # GET AGENT REQUESTS
     path(
         "requests/",  # ?agent=1
-        views.RetrieveequestByAgentRView.as_view(),
+        views.RequestRetrieveByAgentView.as_view(),
         name="list-request-by-agent",
     ),
 ]

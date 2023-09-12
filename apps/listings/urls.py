@@ -4,41 +4,41 @@ from . import views
 urlpatterns = [
     # CREATE LISTING
     path(
-        "agent/create/",
+        "create/agent/",
         views.ListingCreateView.as_view(),
         name="list-create-listing",
     ),
     # LIST PUBLIC LISTING
     path(
-        "public/list/",
+        "list/public/",
         views.PublicListingListUsingQuryParamAPIView.as_view(),
         name="public-listing-list",
     ),
     # AGENT LISTING LIST
     path(
-        "agent/list/",
+        "list/agent/",
         views.AgentListingListUsingQuryParamAPIView.as_view(),
         name="agent-listing-list",
     ),
     # ADMIN LIST LISTING
     path(
-        "admin/list/",
+        "list/admin/",
         views.AdminListingListUsingQuryParamAPIView.as_view(),
         name="admin-listing-list",
     ),
     # UPDATE, DELETE, RETRIEVE LISTING
     path(
-        "<int:pk>/agent/detail/",
+        "<int:pk>/detail/agent/",
         views.ListingDetailView.as_view(),
         name="agent-retrieve-listing",
     ),
     path(
-        "<int:pk>/agent/update/",
+        "<int:pk>/update/agent/",
         views.ListingUpdateView.as_view(),
         name="agent-update-listing",
     ),
     path(
-        "<int:pk>/agent/delete/",
+        "<int:pk>/delete/agent/",
         views.ListingDestroyView.as_view(),
         name="agent-destroy-listing",
     ),

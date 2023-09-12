@@ -851,7 +851,7 @@ class RequestRetrieveView(RetrieveAPIView):
         )
 
 
-class RetrieveequestByAgentRView(RetrieveAPIView):
+class RequestRetrieveByAgentView(RetrieveAPIView):
     queryset = agent_models.Request.objects.all()
     serializer_class = agent_serializers.RequestSerializer
     permission_classes = [IsAgent]

@@ -115,8 +115,11 @@ class BaseListingSerializer(ModelSerializer):
         # GET TAGS THAT CAN BE APPLIED TO LISTING
         tags = Tag.objects.filter(apply_to=constants.TAG_APPLY_TO_LISTING)
 
+        # GET CURRENT USER
+        current_user = self.context["request"].user
+
         # LOCAL VARIABLES TO BE PASSED TO EXEC FUNCTION
-        locals = {"listing": obj, "timezone": timezone}
+        locals = {"listing": obj, "timezone": timezone, "user": current_user}
 
         # LISTING TAGS THAT CAN BE ATTACHED TO THE LISTING
         listing_tags = []

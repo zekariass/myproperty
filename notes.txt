@@ -26,3 +26,9 @@ python manage.py dumpdata system.system commons.country auth.group properties.am
 
 =====LOAD DUMPED DATA TO DB=======================
 python manage.py loaddata initial_data.json
+
+
+=======TAGS========================================
+### check if the user has already contacted the agent or not for the listing
+result=user.is_authenticated and listing.requests.filter(requester__user__isnull=False, requester__user=locals["user"]).exists()
+

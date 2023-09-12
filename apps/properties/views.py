@@ -790,7 +790,9 @@ class ApartmentUnitListCreateByApartmentView(ListCreateAPIView):
 
     def get_queryset(self):
         apartment_id = self.kwargs["apartment_id"]
-        queryset = super().get_queryset().filter(apartment=apartment_id)
+        queryset = (
+            super().get_queryset().filter(apartment=apartment_id)
+        )  # prop_models.ApartmentUnit.objects.filter(apartment=apartment_id)
         return queryset
 
     def post(self, request, *args, **kwargs):
@@ -810,6 +812,9 @@ class ApartmentUnitListCreateByApartmentView(ListCreateAPIView):
         apartment_unit_serializer = self.get_serializer(data=apartment_unit_data)
         apartment_unit_serializer.is_valid(raise_exception=True)
         apartment_unit_serializer.save(apartment=apartment_instance)
+
+        apartment_instance.is_multi_unit = True
+        apartment_instance.save()
         return Response(
             get_success_response_dict(data=apartment_unit_serializer.data),
             status=status.HTTP_201_CREATED,

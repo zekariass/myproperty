@@ -85,12 +85,12 @@ urlpatterns = [
     # PROPERTY KEY FEATURES ROUTES
     # ======================================================================
     path(
-        "<int:pk>/keyfeatures/",
+        "<int:pk>/key-features/",
         prop_views.PropertyKeyFeatureListCreateView.as_view(),
         name="list-create-property-key-feature",
     ),
     path(
-        "keyfeatures/<int:pk>/",
+        "key-features/<int:pk>/",
         prop_views.PropertyKeyFeatureRetrieveUpdateDestroyView.as_view(),
         name="retrieve-update-destroy-property-key-feature",
     ),
@@ -116,7 +116,7 @@ urlpatterns = [
         name="list-create-property-image",
     ),
     path(
-        "propertyimages/<int:pk>/",
+        "images/<int:pk>/",
         prop_views.PropertyImageRetrieveUpdateDestroyView.as_view(),
         name="retrieve-update-destroy-property-image",
     ),
@@ -129,7 +129,7 @@ urlpatterns = [
         name="list-create-property-video",
     ),
     path(
-        "propertyvideos/<int:pk>/",
+        "videos/<int:pk>/",
         prop_views.PropertyVideoRetrieveUpdateDestroyView.as_view(),
         name="retrieve-update-destroy-property-video",
     ),
@@ -151,22 +151,22 @@ urlpatterns = [
     # ======================================================================
     path("create/", prop_views.PropertyCreateView.as_view(), name="create-property"),
     path(
-        "agent/<int:pk>/",
+        "<int:pk>/agent/",
         prop_views.AgentPropertyRetrieveUpdateDestroyView.as_view(),
         name="agent-retrieve-update-destroy-property",
     ),
     path(
-        "agent/list/",
+        "list/agent/",
         prop_views.PropertyListByAgentView.as_view(),
         name="agent-list-property",
     ),
     path(
-        "admin/<int:pk>/",
+        "<int:pk>/admin/",
         prop_views.AdminPropertyRetrieveUpdateDestroyView.as_view(),
         name="admin-retrieve-update-destroy-property",
     ),
     path(
-        "admin/list/",
+        "list/admin/",
         prop_views.PropertyListByAdminView.as_view(),
         name="admin-list-property",
     ),

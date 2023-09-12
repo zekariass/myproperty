@@ -48,11 +48,14 @@ class Address(AddedOnFieldMixin):
 class Tag(DescriptionAndAddedOnFieldMixin):
     name = models.CharField("tag name", max_length=100)
     condition_code = models.TextField(
-        help_text="It can be if condition or anything else."
+        help_text="""
+                    A condition code which starts by result, i.e result=....
+                    Eg.
+                    result=timezone.now() <= listing.added_on + timezone.timedelta(days=2) \n,
+                    result=user.is_authenticated and listing.requests.filter(requester__user__isnull=False, requester__user=user).exists()
+                """
     )
-    apply_to = models.CharField(
-        "tag name", max_length=50, choices=constants.TAG_APPLY_TO
-    )
+    apply_to = models.CharField(max_length=50, choices=constants.TAG_APPLY_TO)
 
     def __str__(self) -> str:
         return f"{self.name}"

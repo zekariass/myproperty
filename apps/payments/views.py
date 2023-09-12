@@ -83,7 +83,7 @@ def perform_payment(request, payment_serializer, payment_data, **kwargs):
 
             if "requested_by" not in payment_data:
                 raise Exception(
-                    f"'requested_by' is not proveded. Who is this payment from?"
+                    f"'requested_by' is not proveded. Who is this payment from? Agent or User?"
                 )
 
             # GET WHO IS MAKING THE PAYMENT, i.e, user, agent
@@ -97,38 +97,9 @@ def perform_payment(request, payment_serializer, payment_data, **kwargs):
                 # GET THE PAYMENT PURPOSE FROM THE INCOMING DATA
                 agent_branch_id = requested_by.get("agent_branch")
 
-                # GET THE SERVICE SUBSCRIPTION IF PAYMENT IS FOR SERVICE SUBSCRIPTION
-                # service_subscription_instance = None
-                # if (
-                #     "service_subscription" in payment_data
-                #     and payment_data["service_subscription"]
-                # ):
-                #     service_subscription_id = payment_data.get("service_subscription")
-                #     # GET SERVICE SUBSCRIPTION FROM DB
-                #     try:
-                #         service_subscription_instance = (
-                #             AgentServiceSubscription.objects.select_related(
-                #                 "agent", "payment"
-                #             ).get(id=service_subscription_id)
-                #         )
-
-                #     except:
-                #         raise Exception(
-                #             f"Agent Service Subscription with id {service_subscription_id} not found!"
-                #         )
-
-                # GET AGENT FROM DB
-                # try:
-                # agent_branch_instance = AgentBranch.objects.select_related(
-                #     "agent"
-                # ).get(id=agent_branch_id)
                 agent_branch_instance = get_cached_or_from_db.get_agent_branch(
                     agent_branch_id
                 )
-                # except:
-                #     raise Exception(
-                #         f"Agent branch with id {agent_branch_id} not found!"
-                #     )
 
                 # GET AGENT NOTIFICATION AND CHANNEL PREFERENCES AND SET THE GLOBAL VARIABLES
                 global agent_notification_preferences, agent_notification_channel_preferences
@@ -161,7 +132,6 @@ def perform_payment(request, payment_serializer, payment_data, **kwargs):
                 # CHECK IF PAYMENT DATA IS VALID, RAISE EXCEPTION OTHERWISE
                 payment_serializer.is_valid(raise_exception=True)
 
-                # CHECK IF INCOMING DATA HAS COUPON AND COUPON IS NOT NULL
                 coupon_instance = None
                 coupon_value = 0
                 payment_result = None
@@ -196,8 +166,6 @@ def perform_payment(request, payment_serializer, payment_data, **kwargs):
                         email_recipients,
                         agent_branch_instance,
                     )
-                    # if isinstance(coupon_process_result, Response):
-                    #     return coupon_process_result
 
                     # GET COUPON VALUE FROM PROCESSED COUPON RESULT. THE RESULT IS A DICTIONARY
                     coupon_value = coupon_process_result["coupon_value"]
@@ -340,15 +308,6 @@ def perform_payment(request, payment_serializer, payment_data, **kwargs):
 
                         # CREATE A SUCCESS DICTIONARY TO BE SENT TO THE CLIENT
 
-                        # return Response(
-                        #     {
-                        #         "detail": {
-                        #             "message": "Payment successful",
-                        #             "data": payment_serializer.data,
-                        #         }
-                        #     },
-                        #     status=status.HTTP_200_OK,
-                        # )
                         payment_result = {
                             "message": "SUCCESSFUL",
                             "data": payment_serializer.data,
@@ -622,19 +581,20 @@ class ApprovePaymentView(RetrieveUpdateDestroyAPIView):
                 agent_branch_id
             )
 
-            if agent_branch_instance.exists():
+            if agent_branch_instance:
                 # GET AGENT NOTIFICATION AND CHANNEL PREFERENCES AND SET THE GLOBAL VARIABLES
                 global agent_notification_preferences, agent_notification_channel_preferences
-                agent_notification_channel_preferences = (
+                agent_notification_channel_preferences = list(
                     helpers.get_agent_notification_channel_preferences(
                         agent_branch_instance.agent
                     )
                 )
-                agent_notification_preferences = (
+                agent_notification_preferences = list(
                     helpers.get_agent_notification_preferences(
                         agent_branch_instance.agent
                     )
                 )
+
                 email_recipient = [agent_branch_instance.email]
                 tasks.send_payment_approved_email_to_agent.delay(
                     recipients=email_recipient,
