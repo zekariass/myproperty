@@ -1,7 +1,14 @@
 from datetime import timedelta
 from django.shortcuts import render
 from django.utils import timezone
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import (ListCreateAPIView, 
+                                     RetrieveUpdateDestroyAPIView, 
+                                     UpdateAPIView,
+                                     DestroyAPIView,
+                                     RetrieveAPIView,
+                                     RetrieveUpdateAPIView,
+                                     ListAPIView, 
+                                     CreateAPIView)
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
@@ -65,13 +72,17 @@ class SystemParameterRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 
 # ============== CURRENCY ======================================
-class CurrencyListCreateView(ListCreateAPIView):
+class CurrencyCreateView(CreateAPIView):
     queryset = sys_models.Currency.objects.all()
     serializer_class = sys_serializers.CurrencySerializer
     permission_classes = [
         IsAdminUser,
     ]
 
+class CurrencyListView(ListAPIView):
+    queryset = sys_models.Currency.objects.all()
+    serializer_class = sys_serializers.CurrencySerializer
+    
 
 class CurrencyRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = sys_models.Currency.objects.all()
@@ -82,13 +93,17 @@ class CurrencyRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 
 # ============== PAYMENT METHOD ======================================
-class PaymentMethodListCreateView(ListCreateAPIView):
+class PaymentMethodCreateView(CreateAPIView):
     queryset = sys_models.PaymentMethod.objects.all()
     serializer_class = sys_serializers.PaymentMethodSerializer
     permission_classes = [
         IsAdminUser,
     ]
 
+class PaymentMethodListView(ListAPIView):
+    queryset = sys_models.PaymentMethod.objects.all()
+    serializer_class = sys_serializers.PaymentMethodSerializer
+    
 
 class PaymentMethodRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = sys_models.PaymentMethod.objects.all()
@@ -99,12 +114,17 @@ class PaymentMethodRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 
 # ============== PAYMENT METHOD DISCOUNT ===============================
-class PaymentMethodDiscountListCreateView(ListCreateAPIView):
+class PaymentMethodDiscountCreateView(CreateAPIView):
     queryset = sys_models.PaymentMethodDiscount.objects.all()
     serializer_class = sys_serializers.PaymentMethodDiscountSerializer
     permission_classes = [
         IsAdminUser,
     ]
+
+class PaymentMethodDiscountListView(ListAPIView):
+    queryset = sys_models.PaymentMethodDiscount.objects.all()
+    serializer_class = sys_serializers.PaymentMethodDiscountSerializer
+    
 
 
 class PaymentMethodDiscountRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -116,12 +136,16 @@ class PaymentMethodDiscountRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIVie
 
 
 # ============== DISCOUNTS ==============================================
-class DiscountListCreateView(ListCreateAPIView):
+class DiscountCreateView(CreateAPIView):
     queryset = sys_models.Discount.objects.all()
     serializer_class = sys_serializers.DiscountSerializer
     permission_classes = [
         IsAdminUser,
     ]
+
+class DiscountListView(ListAPIView):
+    queryset = sys_models.Discount.objects.all()
+    serializer_class = sys_serializers.DiscountSerializer
 
 
 class DiscountRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -133,12 +157,16 @@ class DiscountRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
 
 # ============== SERVICE SUBSCRIPTION PLAN ==============================================
-class ServiceSubscriptionPlanListCreateView(ListCreateAPIView):
+class ServiceSubscriptionPlanCreateView(CreateAPIView):
     queryset = sys_models.ServiceSubscriptionPlan.objects.all()
     serializer_class = sys_serializers.ServiceSubscriptionPlanSerializer
     permission_classes = [
         IsAdminUser,
     ]
+
+class ServiceSubscriptionPlanListView(ListAPIView):
+    queryset = sys_models.ServiceSubscriptionPlan.objects.all()
+    serializer_class = sys_serializers.ServiceSubscriptionPlanSerializer
 
 
 class ServiceSubscriptionPlanRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -149,13 +177,17 @@ class ServiceSubscriptionPlanRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIV
     ]
 
 
-# ============== SYSTEM RATING PLAN ==============================================
-class SystemRatingListCreateView(ListCreateAPIView):
+# ============== SYSTEM RATING ==============================================
+class SystemRatingCreateView(CreateAPIView):
     queryset = sys_models.SystemRating.objects.all()
     serializer_class = sys_serializers.SystemRatingSerializer
     permission_classes = [
         IsAdminUser,
     ]
+
+class SystemRatingListView(ListAPIView):
+    queryset = sys_models.SystemRating.objects.all()
+    serializer_class = sys_serializers.SystemRatingSerializer
 
 
 class SystemRatingRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -166,13 +198,18 @@ class SystemRatingRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     ]
 
 
-# ============== SYSTEM FEEDBACK PLAN ==============================================
-class SystemFeedbackListCreateView(ListCreateAPIView):
+# ============== SYSTEM FEEDBACK ==============================================
+class SystemFeedbackCreateView(CreateAPIView):
     queryset = sys_models.SystemFeedback.objects.all()
     serializer_class = sys_serializers.SystemFeedbackSerializer
     permission_classes = [
         IsAdminUser,
     ]
+
+class SystemFeedbackListView(ListAPIView):
+    queryset = sys_models.SystemFeedback.objects.all()
+    serializer_class = sys_serializers.SystemFeedbackSerializer
+    
 
 
 class SystemFeedbackRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -230,12 +267,17 @@ class CouponListCreateView(ListCreateAPIView):
         coupon_serializer.save(expire_on=timezone.now() + timedelta(coupon_life_time))
 
 
-class CouponRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+class CouponDestroyView(DestroyAPIView):
     queryset = sys_models.Coupon.objects.all()
     serializer_class = sys_serializers.CouponSerializer
     permission_classes = [
         IsAdminUser,
     ]
+
+
+class CouponRetrieveUpdateView(RetrieveUpdateAPIView):
+    queryset = sys_models.Coupon.objects.all()
+    serializer_class = sys_serializers.CouponSerializer
 
 
 # ============== VOUCHER ==============================================
@@ -268,12 +310,13 @@ class VoucherListCreateView(ListCreateAPIView):
         voucher_serializer.save(expire_on=timezone.now() + timedelta(voucher_life_time))
 
 
-class VoucherRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+class VoucherDestroyView(DestroyAPIView):
     queryset = sys_models.Voucher.objects.all()
     serializer_class = sys_serializers.VoucherSerializer
-    permission_classes = [
-        IsAdminUser,
-    ]
+
+class VoucherRetrieveUpdateView(RetrieveUpdateAPIView):
+    queryset = sys_models.Voucher.objects.all()
+    serializer_class = sys_serializers.VoucherSerializer
 
 
 # ============== SUPPORTED CARD SCHEME ===================================
@@ -284,6 +327,11 @@ class SupportedCardSchemeListCreateView(ListCreateAPIView):
         IsAdminUser,
     ]
 
+
+class SupportedCardSchemeListView(ListAPIView):
+    queryset = sys_models.SupportedCardScheme.objects.all()
+    serializer_class = sys_serializers.SupportedCardSchemeSerializer
+    
 
 class SupportedCardSchemeRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = sys_models.SupportedCardScheme.objects.all()
@@ -302,6 +350,11 @@ class SystemAssetOwnerListCreateView(ListCreateAPIView):
     ]
 
 
+class SystemAssetOwnerListView(ListAPIView):
+    queryset = sys_models.SystemAssetOwner.objects.all()
+    serializer_class = sys_serializers.SystemAssetOwnerSerializer
+
+
 class SystemAssetOwnerRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = sys_models.SystemAssetOwner.objects.all()
     serializer_class = sys_serializers.SystemAssetOwnerSerializer
@@ -317,6 +370,12 @@ class SystemAssetListCreateView(ListCreateAPIView):
     permission_classes = [
         IsAdminUser,
     ]
+
+
+class SystemAssetListView(ListAPIView):
+    queryset = sys_models.SystemAsset.objects.all()
+    serializer_class = sys_serializers.SystemAssetSerializer
+    
 
 
 class SystemAssetRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -360,6 +419,11 @@ class ReferralRewardPlanListCreateView(ListCreateAPIView):
             )
 
 
+class ReferralRewardPlanListView(ListAPIView):
+    queryset = sys_models.ReferralRewardPlan.objects.all()
+    serializer_class = sys_serializers.ReferralRewardPlanSerializer
+
+
 class ReferralRewardPlanRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = sys_models.ReferralRewardPlan.objects.all()
     serializer_class = sys_serializers.ReferralRewardPlanSerializer
@@ -401,6 +465,10 @@ class FeaturingPriceListCreateView(ListCreateAPIView):
     permission_classes = [
         IsAdminUser,
     ]
+
+class FeaturingPriceListView(ListAPIView):
+    queryset = sys_models.FeaturingPrice.objects.all()
+    serializer_class = sys_serializers.FeaturingPriceSerializer
 
 
 class FeaturingPriceRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):

@@ -53,78 +53,6 @@ class DiscountSerializer(ModelSerializer):
         model = sys_models.Discount
         fields = "__all__"
 
-    # def create(self, validated_data):
-    # If is_trackable is True, then add a record to every agent in AgentDiscount table
-    #     pass
-
-    # def validate(self, data):
-    #     action = data.get("action")
-    #     unit = data.get("unit")
-    #     payment_type = data.get("payment_type")
-    #     is_trackable = data.get("is_trackable")
-
-    # if (
-    #     action == constants.DISCOUNT_ACTION_COUNT
-    #     and payment_type == constants.LISTING_PAYMENT_TYPE_SUBSCRIPTION
-    # ):
-    #     raise serializers.ValidationError(
-    #         {"error": "Subscription discount cannot have count action type!"}
-    #     )
-    # if payment_type == constants.LISTING_PAYMENT_TYPE_SUBSCRIPTION and is_trackable:
-    #     raise serializers.ValidationError(
-    #         {"error": "Subscription discount discount cannot be trackable!"}
-    #     )
-
-    # if action == constants.DISCOUNT_ACTION_DEADLINE and is_trackable:
-    #     raise serializers.ValidationError(
-    #         {"error": "Discount with deadline action type cannot be trackable!"}
-    #     )
-
-    # if (
-    #     action == constants.DISCOUNT_ACTION_DEADLINE
-    #     and unit != constants.DISCOUNT_UNIT_NONE
-    # ):
-    #     raise serializers.ValidationError(
-    #         {"error": "Discount with deadline can only have None unit!"}
-    #     )
-
-    # if (
-    #     payment_type == constants.LISTING_PAYMENT_TYPE_SUBSCRIPTION
-    #     and unit == constants.DISCOUNT_ACTION_SINGLE
-    #     and is_trackable
-    # ):
-    #     raise serializers.ValidationError(
-    #         {
-    #             "error": "Subscription discount with single action type cannot be trackable!"
-    #         }
-    #     )
-
-    # if (
-    #     payment_type == constants.LISTING_PAYMENT_TYPE_PAY_PER_LISTING
-    #     and unit == constants.DISCOUNT_ACTION_SINGLE
-    #     or payment_type == constants.LISTING_PAYMENT_TYPE_PAY_PER_LISTING
-    #     and unit == constants.DISCOUNT_UNIT_NONE
-    # ):
-    #     raise serializers.ValidationError(
-    #         {
-    #             "error": "Pay-per-listing type discount cannot have single action type and None unit!"
-    #         }
-    #     )
-
-    # if (
-    #     payment_type == constants.LISTING_PAYMENT_TYPE_SUBSCRIPTION
-    #     and action == constants.DISCOUNT_ACTION_COUNT
-    #     or payment_type == constants.LISTING_PAYMENT_TYPE_SUBSCRIPTION
-    #     and unit == constants.DISCOUNT_UNIT_NONE
-    # ):
-    #     raise serializers.ValidationError(
-    #         {
-    #             "error": "Subscription type discount cannot have count action type and None unit"
-    #         }
-    #     )
-
-    # return data
-
 
 # ================ SERVICE SUBSCRIPTION PLAN ===============
 class ServiceSubscriptionPlanSerializer(ModelSerializer):
@@ -254,6 +182,7 @@ class SystemAssetOwnerSerializer(ModelSerializer):
 
 # ================ SYSTEM ASSET =========================
 class SystemAssetSerializer(ModelSerializer):
+    asset_owner = SystemAssetOwnerSerializer()
     class Meta:
         model = sys_models.SystemAsset
         fields = "__all__"
